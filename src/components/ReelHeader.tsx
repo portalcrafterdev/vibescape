@@ -21,4 +21,27 @@ const ReelsHeader = () => {
       <TouchableOpacity>
         <Plus
           color="white"
-          size={28}
+          size={28}
+        />
+      </TouchableOpacity>
+
+      <View style={styles.center}>
+
+        <Text style={styles.reels}>
+          Reels
+        </Text>
+
+        <ChevronDown
+          color="white"
+          size={18}
+        />
+
+      </View>
+
+      <View style={styles.right}>
+
+        <Text style={styles.friendText}>
+          Friends
+        </Text>
+
+        <Image
