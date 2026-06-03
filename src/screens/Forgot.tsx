@@ -45,4 +45,27 @@ const ForgotScreen = ({ navigation }: Props) => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <ArrowLeft color="white" size={24} />
+          <ArrowLeft color="white" size={24} />
+        </TouchableOpacity>
+
+        <Text style={styles.title}>
+          Trouble logging in?
+        </Text>
+
+        <Text style={styles.description}>
+          Enter your email, phone, or username and we'll send you a link to get back into your account.
+        </Text>
+
+        <TextInput
+          placeholder="Email, Phone or Username"
+          placeholderTextColor="#888"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+        />
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={sendLink}
+        >
+          <Text style={styles.buttonText}>
