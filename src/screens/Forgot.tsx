@@ -68,4 +68,28 @@ const ForgotScreen = ({ navigation }: Props) => {
           style={styles.button}
           onPress={sendLink}
         >
-          <Text style={styles.buttonText}>
+          <Text style={styles.buttonText}>
+            Send Login Link
+          </Text>
+        </TouchableOpacity>
+
+        <View style={styles.orContainer}>
+          <View style={styles.line} />
+          <Text style={styles.or}>OR</Text>
+          <View style={styles.line} />
+        </View>
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Register')}
+        >
+          <Text style={styles.createAccount}>
+            Create New Account
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.bottom}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backLogin}>
+            Back to Login
