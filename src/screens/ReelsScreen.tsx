@@ -17,4 +17,25 @@ const ReelsScreen = () => {
   const isfocused = useIsFocused();
   const [activeId, setActiveId] = useState(reels[0].id);
   const viewabilityConfig= useRef({ itemVisiblePercentThreshold: 80}).current;
-
+
+  const onViewableItemsChanged = useRef(({viewableItems}: any)=>{
+    if(viewableItems.length>0) setActiveId(viewableItems[0].item.id);
+  }).current 
+
+  return (
+    <View style={styles.container}>
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="light-content"
+      />
+
+      <FlatList
+        data={reels}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <ReelCard item={item} isActive={item.id === activeId && isfocused} />
+        )}
+        pagingEnabled
+        snapToInterval={height}
+        decelerationRate="fast"
