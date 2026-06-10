@@ -17,3 +17,22 @@ const ProfileScreen = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
+        bounces={false}
+        contentContainerStyle={styles.content}
+      >
+        <ProfileHeader />
+
+        <ProfileInfo />
+
+        <ProfileButtons />
+
+        <StoryHighlight />
+
+        <ProfileTabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
+
+        {activeTab === 'posts' && <ProfileGrid />}
+
+        {activeTab === 'reels' && <Text>This is reel screen</Text>}
