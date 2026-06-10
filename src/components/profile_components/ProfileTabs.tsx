@@ -19,3 +19,27 @@ type Props = {
 const ProfileTabs = ({ activeTab, setActiveTab }: Props) => {
   return (
     <View style={styles.container}>
+
+      <TouchableOpacity
+        style={[
+          styles.tab,
+          activeTab === 'posts' && styles.activeTab,
+        ]}
+        onPress={() => setActiveTab('posts')}
+      >
+        <Grid3X3
+          size={24}
+          color={activeTab === 'posts' ? '#fff' : '#777'}
+        />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.tab,
+          activeTab === 'reels' && styles.activeTab,
+        ]}
+        onPress={() => setActiveTab('reels')}
+      >
+        <Clapperboard
+          size={24}
+          color={activeTab === 'reels' ? '#fff' : '#777'}
