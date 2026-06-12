@@ -22,4 +22,28 @@ const SearchScreen = () => {
         renderItem={({ item }) => <SearchItem item={item} />}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={
+        ListHeaderComponent={
+          <View style={styles.searchBar}>
+            <Search
+              color="#8e8e93"
+              size={20}
+            />
+
+            <TextInput
+              placeholder="Search with Meta AI"
+              placeholderTextColor="#8e8e93"
+              style={styles.input}
+            />
+          </View>
+        }
+      />
+    </SafeAreaView>
+  );
+};
+
+export default SearchScreen;
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#000',
