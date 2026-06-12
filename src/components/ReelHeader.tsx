@@ -44,4 +44,28 @@ const ReelsHeader = () => {
           Friends
         </Text>
 
-        <Image
+        <Image
+          source={{
+            uri: 'https://i.pravatar.cc/150?img=15',
+          }}
+          style={styles.avatar}
+        />
+
+        <Image
+          source={{
+            uri: 'https://i.pravatar.cc/150?img=20',
+          }}
+          style={[
+            styles.avatar,
+            {
+              marginLeft: -10,
+            },
+          ]}
+        />
+
+      </View>
+
+    </View>
+  );
+};
+
