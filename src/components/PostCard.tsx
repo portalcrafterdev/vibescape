@@ -43,4 +43,26 @@ const PostCard = ({ item }: Props) => {
 
       {/* Post Image */}
       <Image
-        source={{ uri: item.postImage }}
+        source={{ uri: item.postImage }}
+        style={styles.postImage}
+      />
+
+      {/* Action Icons */}
+      <View style={styles.actions}>
+
+        <View style={styles.leftIcons}>
+          <TouchableOpacity onPress={() => setLiked(!liked)}>
+            <Heart
+              color={liked ? 'red' : 'white'}
+              fill={liked ? 'red' : 'none'}
+              size={28}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.iconSpacing}>
+            <MessageCircle color="white" size={26} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.iconSpacing}>
+            <Send color="white" size={25} />
+          </TouchableOpacity>
