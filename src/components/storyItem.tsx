@@ -18,4 +18,25 @@ const StoryItem = ({ item }: any) => {
         />
 
         {item.isMe && (
-          <View style={styles.plusButton}>
+          <View style={styles.plusButton}>
+            <Plus color="white" size={14} />
+          </View>
+        )}
+      </View>
+
+      <Text
+        numberOfLines={1}
+        style={styles.name}
+      >
+        {item.username || item.name || item.note}
+      </Text>
+    </View>
+  );
+};
+
+export default StoryItem;
+
+const styles = StyleSheet.create({
+  container: {
+    width: 80,
+    alignItems: 'center',
