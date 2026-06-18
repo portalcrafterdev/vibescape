@@ -21,4 +21,27 @@ const ProfileInfo = () => {
         {/* Profile Image */}
         <View style={styles.avatarContainer}>
           <Image
-            source={require('../../assets/images/Portelcrafterlogo.png')}
+            source={require('../../assets/images/Portelcrafterlogo.png')}
+            style={styles.avatar}
+          />
+
+          <TouchableOpacity style={styles.addButton}>
+            <Plus
+              color="#000"
+              size={18}
+              strokeWidth={3}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Stats */}
+        <View style={styles.statsContainer}>
+
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>147</Text>
+            <Text style={styles.statLabel}>posts</Text>
+          </View>
+
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>357</Text>
+            <Text style={styles.statLabel}>followers</Text>
