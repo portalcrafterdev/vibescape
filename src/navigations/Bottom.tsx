@@ -18,4 +18,24 @@ import {
 } from 'lucide-react-native';
 
 import CustomTabBar from '../component/customTabBar';
-
+
+const Tab = createBottomTabNavigator();
+
+export default function BottomTabs() {
+  return (
+    <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{
+        tabBarShowLabel: false,
+
+        headerStyle: {
+          backgroundColor: '#000',
+        },
+
+        headerTintColor: '#fff',
+
+        headerShadowVisible: false,
+    
+
+        sceneStyle: {
+          backgroundColor: '#000',
