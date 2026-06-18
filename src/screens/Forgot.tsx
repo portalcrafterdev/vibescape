@@ -92,4 +92,28 @@ const ForgotScreen = ({ navigation }: Props) => {
           onPress={() => navigation.goBack()}
         >
           <Text style={styles.backLogin}>
-            Back to Login
+            Back to Login
+          </Text>
+        </TouchableOpacity>
+
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+};
+
+export default ForgotScreen;
+
+const styles = StyleSheet.create({
+  scroll: {
+    flexGrow: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    paddingHorizontal: 25,
+  },
+
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+  },
+
