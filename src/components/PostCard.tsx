@@ -65,4 +65,27 @@ const PostCard = ({ item }: Props) => {
 
           <TouchableOpacity style={styles.iconSpacing}>
             <Send color="white" size={25} />
-          </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity>
+          <Bookmark color="white" size={26} />
+        </TouchableOpacity>
+
+      </View>
+
+      {/* Likes */}
+      <Text style={styles.likes}>
+        {item.likes} likes
+      </Text>
+
+      {/* Caption */}
+      <Text style={styles.caption}>
+        <Text style={{ fontWeight: 'bold' }}>
+          {item.username}
+        </Text>{' '}
+        {item.caption}
+      </Text>
+
+      {/* Comments */}
+      <Text style={styles.comments}>
