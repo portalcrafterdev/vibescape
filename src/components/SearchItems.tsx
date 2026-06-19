@@ -19,4 +19,25 @@ const SearchItem = ({ item }: any) => {
         source={{ uri: item.image }}
         style={styles.image}
       />
-
+
+      <View style={styles.overlay}>
+        <Eye
+          color="white"
+          size={13}
+        />
+
+        <Text style={styles.views}>
+          {item.views}
+        </Text>
+      </View>
+    </View>
+  );
+};
+
+export default SearchItem;
+
+const styles = StyleSheet.create({
+  container: {
+    width: ITEM_SIZE,
+    height: ITEM_SIZE * 1.55,
+    padding: 1
