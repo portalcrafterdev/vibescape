@@ -44,4 +44,28 @@ const ProfileInfo = () => {
 
           <View style={styles.statItem}>
             <Text style={styles.statValue}>357</Text>
-            <Text style={styles.statLabel}>followers</Text>
+            <Text style={styles.statLabel}>followers</Text>
+          </View>
+
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>338</Text>
+            <Text style={styles.statLabel}>following</Text>
+          </View>
+
+        </View>
+
+      </View>
+
+      <View style={styles.bioContainer}>
+
+        <Text style={styles.name}>
+          Portal Crafter 🚀
+        </Text>
+
+        <Text style={styles.bio}>
+          Building Beautiful Mobile Apps
+        </Text>
+
+        <Text style={styles.bio}>
+          Flutter • React Native
+        </Text>
