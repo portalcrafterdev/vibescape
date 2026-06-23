@@ -20,3 +20,26 @@ const ProfileGrid = () => {
       keyExtractor={(item) => item.id}
       numColumns={3}
       scrollEnabled={false}
+      renderItem={({ item }) => (
+        <View style={styles.item}>
+
+          <Image
+            source={{ uri: item.image }}
+            style={styles.image}
+          />
+
+          {item.pinned && (
+            <View style={styles.pin}>
+              <Pin
+                size={14}
+                color="#fff"
+                fill="#fff"
+              />
+            </View>
+          )}
+
+        </View>
+      )}
+    />
+  );
+};
