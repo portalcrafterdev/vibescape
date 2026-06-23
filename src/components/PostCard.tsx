@@ -88,4 +88,27 @@ const PostCard = ({ item }: Props) => {
       </Text>
 
       {/* Comments */}
-      <Text style={styles.comments}>
+      <Text style={styles.comments}>
+        View all {item.comments} comments
+      </Text>
+
+      {/* Time */}
+      <Text style={styles.time}>
+        {item.time}
+      </Text>
+
+    </View>
+  );
+};
+
+export default PostCard;
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#000',
+    marginBottom: 20,
+  },
+
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
