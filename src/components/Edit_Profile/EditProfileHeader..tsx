@@ -19,4 +19,25 @@ const EditProfileHeader = () => {
         onPress={() => navigation.goBack()}
       >
         <ArrowLeft
-          size={26}
+          size={26}
+          color="#fff"
+          strokeWidth={2.2}
+        />
+      </TouchableOpacity>
+
+      <Text style={styles.title}>
+        Edit profile
+      </Text>
+
+      <View style={styles.placeholder} />
+    </View>
+  );
+};
+
+export default EditProfileHeader;
+
+const styles = StyleSheet.create({
+  container: {
+    height: 56,
+    backgroundColor: "#000",
+    flexDirection: "row",
