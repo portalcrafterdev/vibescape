@@ -38,4 +38,25 @@ export default function BottomTabs() {
     
 
         sceneStyle: {
-          backgroundColor: '#000',
+          backgroundColor: '#000',
+        },
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          headerTitleAlign: 'center',
+
+          headerLeft: () => (
+            <TouchableOpacity
+              style={{ marginLeft: 15 }}
+            >
+              <Plus
+                color="white"
+                size={28}
+              />
+            </TouchableOpacity>
+          ),
+
+      headerTitle: () => (
