@@ -42,4 +42,27 @@ export const reels = [
  
 
       {
-    id: '4',
+    id: '4',
+    username: 'developer',
+    profile: 'https://i.pravatar.cc/150?img=2',
+    video: {
+  uri: 'https://filesamples.com/samples/video/mp4/sample_960x400_ocean_with_audio.mp4'
+},
+
+    album: 'https://i.pravatar.cc/150?img=12',
+    caption: 'Coding all night 💻',
+    likes: '8.3K',
+    comments: '190',
+  },
+
+
+        {
+    id: '5',
+    username: 'developer',
+    profile: 'https://i.pravatar.cc/150?img=2',
+    video: {
+  uri: 'https://filesamples.com/samples/video/mp4/sample_3840x2160.mp4'
+},
+
+    album: 'https://i.pravatar.cc/150?img=12',
+    caption: 'Coding all night 💻',
