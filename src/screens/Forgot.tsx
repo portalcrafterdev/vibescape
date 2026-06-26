@@ -116,4 +116,28 @@ const styles = StyleSheet.create({
     top: 50,
     left: 20,
   },
+
+  title: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+
+  description: {
+    color: '#aaa',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 35,
+  },
+
+  input: {
+    backgroundColor: '#262626',
+    color: '#fff',
+    height: 50,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+  },
 
