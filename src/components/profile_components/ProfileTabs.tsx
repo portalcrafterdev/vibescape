@@ -43,3 +43,24 @@ const ProfileTabs = ({ activeTab, setActiveTab }: Props) => {
         <Clapperboard
           size={24}
           color={activeTab === 'reels' ? '#fff' : '#777'}
+        />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.tab,
+          activeTab === 'tagged' && styles.activeTab,
+        ]}
+        onPress={() => setActiveTab('tagged')}
+      >
+        <UserRound
+          size={24}
+          color={activeTab === 'tagged' ? '#fff' : '#777'}
+        />
+      </TouchableOpacity>
+
+    </View>
+  );
+};
+
+export default ProfileTabs;
