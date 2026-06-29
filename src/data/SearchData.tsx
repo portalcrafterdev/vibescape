@@ -22,4 +22,29 @@ export const searchData = [
     image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800',
     views: '2.7M',
     isVideo: true,
-  },
+  },
+  {
+    id: '5',
+    image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800',
+    views: '236K',
+    isVideo: true,
+  },
+  {
+    id: '6',
+    image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800',
+    views: '44M',
+    isVideo: true,
+  },
+  {
+    id: '7',
+    image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800',
+    views: '608K',
+    isVideo: true,
+  },
+  {
+    id: '8',
+    image: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800',
+    views: '3.1M',
+    isVideo: true,
+  },
+  {
