@@ -68,4 +68,27 @@ const ReelsHeader = () => {
     </View>
   );
 };
-
+
+export default ReelsHeader;
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    top: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 30,
+    left: 15,
+    right: 15,
+
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+
+  center: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  reels: {
+    color: 'white',
+    fontSize: 28,
