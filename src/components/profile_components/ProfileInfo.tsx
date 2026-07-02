@@ -68,4 +68,28 @@ const ProfileInfo = () => {
 
         <Text style={styles.bio}>
           Flutter • React Native
-        </Text>
+        </Text>
+
+        <Text style={styles.link}>
+          portalcrafter.dev
+        </Text>
+
+      </View>
+
+    </View>
+  );
+};
+
+export default ProfileInfo;
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#000',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
