@@ -37,4 +37,25 @@ const ReelActions = ({ item }: any) => {
 
 <TouchableOpacity style={styles.item}>
   <Send color="white" size={23} strokeWidth={2} />
-</TouchableOpacity>
+</TouchableOpacity>
+
+<TouchableOpacity style={styles.item}>
+  <Bookmark color="white" size={23} strokeWidth={2} />
+  <Text style={styles.count}>3,694</Text>
+</TouchableOpacity>
+
+<TouchableOpacity style={styles.item}>
+  <MoreHorizontal color="white" size={23} strokeWidth={2} />
+</TouchableOpacity>
+
+<TouchableOpacity style={styles.albumContainer}>
+  <Image
+    source={{ uri: item.album }}
+    style={styles.albumImage}
+  />
+</TouchableOpacity>
+
+    </View>
+  );
+};
+
