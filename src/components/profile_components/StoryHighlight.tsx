@@ -17,4 +17,25 @@ const StoryHighlight = () => {
         </TouchableOpacity>
       ) : (
         <TouchableOpacity style={styles.highlightBorder}>
-          <Image
+          <Image
+            source={{ uri: item.image }}
+            style={styles.highlightImage}
+          />
+        </TouchableOpacity>
+      )}
+
+      <Text
+        style={styles.title}
+        numberOfLines={1}
+      >
+        {item.title}
+      </Text>
+    </View>
+  );
+
+
+return(
+ <View style={styles.container}>
+    <FlatList
+    horizontal
+   data={highlights}
