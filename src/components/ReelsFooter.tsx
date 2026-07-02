@@ -18,4 +18,25 @@ const ReelFooter = ({ item }: any) => {
 
         <Image
           source={{ uri: item.profile }}
-          style={styles.profile}
+          style={styles.profile}
+        />
+
+        <Text style={styles.username}>
+          {item.username}
+        </Text>
+
+        <TouchableOpacity style={styles.followButton}>
+          <Text style={styles.followText}>
+            Follow
+          </Text>
+        </TouchableOpacity>
+
+      </View>
+
+ 
+
+      {/* Caption */}
+      <Text style={styles.caption}>
+        {item.caption}
+      </Text>
+
