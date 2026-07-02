@@ -111,4 +111,27 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+  },
+
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+  },
+
+  username: {
+    color: 'white',
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+
+  postImage: {
+    width: '100%',
