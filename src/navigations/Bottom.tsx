@@ -59,4 +59,25 @@ export default function BottomTabs() {
             </TouchableOpacity>
           ),
 
-      headerTitle: () => (
+      headerTitle: () => (
+  <Text
+    style={{
+      color: '#fff',
+      fontSize: 25,
+      fontFamily: 'Billabong',
+    }}
+  >
+    Instagram
+  </Text>
+),
+
+          headerRight: () => (
+            <TouchableOpacity
+              style={{ marginRight: 15 }}
+            >
+              <Heart
+                color="white"
+                size={27}
+              />
+            </TouchableOpacity>
+          ),
