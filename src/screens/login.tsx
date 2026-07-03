@@ -104,4 +104,57 @@ const LoginScreen = ({ navigation }: Props) => {
       </TouchableOpacity>
 
 <View style={{flexDirection: "row"}}>
-
+
+    <Text style={styles.alread}>Don't have an account?</Text>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('Register')}
+      >
+        <Text style={styles.signup}>
+           Sign Up
+        </Text>
+      </TouchableOpacity>
+      </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+};
+
+export default LoginScreen;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    paddingHorizontal: 25,
+  },
+
+  logo: {
+    color: '#fff',
+    fontSize: 42,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 50,
+  },
+
+  input: {
+    backgroundColor: '#262626',
+    color: '#fff',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    height: 50,
+    marginBottom: 15,
+  },
+
+  passwordContainer: {
+    backgroundColor: '#262626',
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    marginBottom: 10,
+  },
+
+  passwordInput: {
+    flex: 1,
+    color: '#fff',
