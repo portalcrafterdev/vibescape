@@ -39,4 +39,25 @@ const ReelFooter = ({ item }: any) => {
       <Text style={styles.caption}>
         {item.caption}
       </Text>
-
+
+      {/* Liked By */}
+      <Text style={styles.likes}>
+        Liked by <Text style={styles.bold}>john_doe</Text> and{' '}
+        <Text style={styles.bold}>3,521 others</Text>
+      </Text>
+
+    </View>
+  );
+};
+
+export default ReelFooter;
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 80,
+    left: 15,
+    right: 80,
+  },
+
+  userRow: {
