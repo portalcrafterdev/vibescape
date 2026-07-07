@@ -92,4 +92,28 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+
+  avatarContainer: {
+    position: 'relative',
+  },
+
+  avatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+  },
+
+  addButton: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#000',
   },
