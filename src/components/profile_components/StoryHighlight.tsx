@@ -38,4 +38,24 @@ return(
  <View style={styles.container}>
     <FlatList
     horizontal
-   data={highlights}
+   data={highlights}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+    />
+ </View>
+);
+}
+export default StoryHighlight;
+
+const styles = StyleSheet.create({
+  container: {
+    marginTop: 8,
+    marginBottom: 18,
+  },
+
+  content: {
+    paddingHorizontal: 16,
+  },
+
