@@ -140,4 +140,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginBottom: 20,
   },
-
+
+  button: {
+    backgroundColor: '#3797EF',
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+
+  orContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 40,
+  },
+
+  line: {
+    flex: 1,
+    height: 1,
