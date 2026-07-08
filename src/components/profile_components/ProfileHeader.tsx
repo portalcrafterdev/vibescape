@@ -23,4 +23,29 @@ const ProfileHeader= ()=>{
 
         <TouchableOpacity style= {styles.iconButton}>
             <Menu color={"white"} size={22}/>
-        </TouchableOpacity>
+        </TouchableOpacity>
+       </View>
+        </View>
+    );
+};
+
+export default ProfileHeader;
+
+
+const styles = StyleSheet.create({
+   container: {
+    height: 60,
+    backgroundColor: '#000',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  
+
+    plusButton: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
