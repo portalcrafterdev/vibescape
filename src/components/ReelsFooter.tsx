@@ -60,4 +60,25 @@ const styles = StyleSheet.create({
     right: 80,
   },
 
-  userRow: {
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  profile: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+
+  username: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+    marginLeft: 10,
+  },
+
+  followButton: {
+    marginLeft: 12,
+    borderWidth: 1,
+    borderColor: '#fff',
