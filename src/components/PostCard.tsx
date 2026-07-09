@@ -134,4 +134,26 @@ const styles = StyleSheet.create({
   },
 
   postImage: {
-    width: '100%',
+    width: '100%',
+    height: 420,
+  },
+
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+
+  leftIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  iconSpacing: {
+    marginLeft: 15,
+  },
+
+  likes: {
+    color: 'white',
+    fontWeight: 'bold',
