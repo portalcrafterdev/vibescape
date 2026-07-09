@@ -58,4 +58,24 @@ const ReelActions = ({ item }: any) => {
     </View>
   );
 };
-
+
+export default ReelActions;
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    right: 12,
+    bottom: 68,
+    alignItems: 'center',
+  },
+
+  item: {
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+
+  count: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
