@@ -60,4 +60,25 @@ export default function CustomTabBar({
               style={[
                 styles.tabButton,
                 focused && styles.activeButton,
-              ]}
+              ]}
+            >
+              <Icon
+                size={26}
+                color={focused ? '#000' : '#666'}
+                strokeWidth={2.3}
+              />
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+const styles = StyleSheet.create({
+  wrapper: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    bottom: 20,
+    alignItems: 'center',
+  },
