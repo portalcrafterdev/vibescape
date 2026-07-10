@@ -80,4 +80,24 @@ export default function BottomTabs() {
                 size={27}
               />
             </TouchableOpacity>
-          ),
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{
+          headerTitle: 'Search',
+          headerShown: false
+        }}
+      />
+
+      <Tab.Screen
+        name="Create"
+        component={CreateScreen}
+        options={{
+          headerTitle: 'Create',
+          headerShown: false
+        }}
+      />
