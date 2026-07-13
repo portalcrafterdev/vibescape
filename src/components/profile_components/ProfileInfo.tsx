@@ -116,4 +116,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#000',
+  },
+
+  statsContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    marginLeft: 20,
+  },
+
+  statItem: {
+    alignItems: 'center',
+  },
+
+  statValue: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '700',
+  },
+
+  statLabel: {
+    color: '#fff',
+    fontSize: 15,
+    marginTop: 2,
   },
