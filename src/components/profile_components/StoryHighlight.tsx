@@ -58,4 +58,25 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 16,
   },
+
+  item: {
+    alignItems: 'center',
+    marginRight: 18,
+  },
+
+  highlightBorder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: '#3a3a3a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  highlightImage: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+  },
 
