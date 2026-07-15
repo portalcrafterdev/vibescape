@@ -56,4 +56,24 @@ export const highlights: Highlight[] = [
     title: 'A',
     image: 'https://dummyimage.com/200x200/000/ffffff&text=A',
   },
-  {
+  {
+    id: '10',
+    title: 'F',
+    image: 'https://dummyimage.com/200x200/000/ffffff&text=F',
+  },
+  {
+    id: '11',
+    title: 'T',
+    image: 'https://dummyimage.com/200x200/000/ffffff&text=T',
+  },
+  {
+    id: '12',
+    title: 'E',
+    image: 'https://dummyimage.com/200x200/000/ffffff&text=E',
+  },
+  {
+    id: '13',
+    title: 'R',
+    image: 'https://dummyimage.com/200x200/000/ffffff&text=R',
+  },
+];
