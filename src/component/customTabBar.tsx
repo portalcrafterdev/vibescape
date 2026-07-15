@@ -81,4 +81,25 @@ const styles = StyleSheet.create({
     right: 20,
     bottom: 20,
     alignItems: 'center',
-  },
+  },
+
+  container: {
+    flexDirection: 'row',
+    backgroundColor: '#000',
+    borderWidth:1,
+
+    width: '100%',
+    height: 50,
+
+    borderRadius: 40,
+
+    justifyContent: 'space-around',
+    alignItems: 'center',
+
+    shadowColor: '#000',
+
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+
