@@ -157,4 +157,57 @@ const styles = StyleSheet.create({
 
   passwordInput: {
     flex: 1,
-    color: '#fff',
+    color: '#fff',
+    height: 50,
+  },
+
+  forgot: {
+    color: '#3797EF',
+    alignSelf: 'flex-end',
+    marginBottom: 30,
+    fontWeight: '600',
+  },
+
+  loginButton: {
+    backgroundColor: '#3797EF',
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+
+  loginText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+
+    logoImage: {
+    width: 80,
+    height: 80,
+    marginBottom: 15,
+    justifyContent:"center",
+    
+  },
+
+  logocontainer:{
+ alignItems: "center"
+  },
+
+
+  signup: {
+    color: '#3797EF',
+    textAlign: 'center',
+    marginTop: 35,
+  },
+
+  alread:{
+    color: "white", textAlign: 'center', marginTop: 35, paddingLeft:40, paddingRight:5
+  },
+  scrollcontainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    color: "black"
+
+  }
+});
