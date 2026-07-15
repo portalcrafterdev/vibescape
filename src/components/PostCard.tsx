@@ -156,4 +156,27 @@ const styles = StyleSheet.create({
 
   likes: {
     color: 'white',
-    fontWeight: 'bold',
+    fontWeight: 'bold',
+    marginHorizontal: 12,
+  },
+
+  caption: {
+    color: 'white',
+    marginHorizontal: 12,
+    marginTop: 6,
+  },
+
+  comments: {
+    color: 'gray',
+    marginHorizontal: 12,
+    marginTop: 8,
+  },
+
+  time: {
+    color: 'gray',
+    fontSize: 12,
+    marginHorizontal: 12,
+    marginTop: 5,
+    marginBottom: 10,
+  },
+});
