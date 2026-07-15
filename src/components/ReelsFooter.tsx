@@ -81,4 +81,25 @@ const styles = StyleSheet.create({
   followButton: {
     marginLeft: 12,
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: '#fff',
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+  },
+
+  followText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+
+  caption: {
+    color: '#fff',
+    marginTop: 12,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+
+  musicRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
