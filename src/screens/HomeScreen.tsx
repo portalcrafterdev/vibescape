@@ -15,4 +15,21 @@ const HomeScreen = () => {
       renderItem={({ item }) => <PostCard item={item} />}
       ListHeaderComponent={
         <FlatList
-          horizontal
+          horizontal
+          data={stories}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <StoryItem item={item} />}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+          }}
+        />
+      }
+      showsVerticalScrollIndicator={false}
+      style={{ backgroundColor: '#000' }}
+    />
+  );
+};
+
+export default HomeScreen;
