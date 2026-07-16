@@ -64,3 +64,26 @@ const ProfileTabs = ({ activeTab, setActiveTab }: Props) => {
 };
 
 export default ProfileTabs;
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    backgroundColor: '#000',
+    borderTopWidth: 0.5,
+    borderBottomWidth: 0.5,
+    borderColor: '#262626',
+    marginTop: 10,
+  },
+
+  tab: {
+    flex: 1,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  activeTab: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#fff',
+  },
+});
