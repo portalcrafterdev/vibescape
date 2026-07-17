@@ -100,4 +100,25 @@ export default function BottomTabs() {
           headerTitle: 'Create',
           headerShown: false
         }}
-      />
+      />
+
+      <Tab.Screen
+        name="Reels"
+        component={ReelsScreen}
+        options={{
+          headerTitle: 'Reels',
+          headerShown: false
+        }}
+      />
+
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          headerTitle: 'Profile',
+          headerShown:  false
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
