@@ -43,3 +43,25 @@ const ProfileGrid = () => {
     />
   );
 };
+
+export default ProfileGrid;
+
+const styles = StyleSheet.create({
+  item: {
+    width: SIZE,
+    height: SIZE,
+    borderWidth: 0.3,
+    borderColor: '#000',
+  },
+
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+
+  pin: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+  },
+});
