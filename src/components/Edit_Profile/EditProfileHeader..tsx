@@ -40,4 +40,26 @@ const styles = StyleSheet.create({
   container: {
     height: 56,
     backgroundColor: "#000",
-    flexDirection: "row",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#262626",
+  },
+
+  backButton: {
+    width: 36,
+    alignItems: "flex-start",
+  },
+
+  title: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "700",
+  },
+
+  placeholder: {
+    width: 36,
+  },
+});
