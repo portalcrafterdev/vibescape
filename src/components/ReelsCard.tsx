@@ -48,4 +48,29 @@ const ReelCard = ({ item, isActive }: any) => {
 export default ReelCard;
 
 const styles = StyleSheet.create({
-  container: {
+  container: {
+    width,
+    height,
+    backgroundColor: '#000',
+  },
+
+ video: {
+  position: 'absolute',
+  width: '100%',
+  height: '100%',
+},
+
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+  },
+
+  bottomGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 280,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+});
