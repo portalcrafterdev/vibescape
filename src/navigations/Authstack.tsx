@@ -22,4 +22,29 @@ const AuthStack = () => {
       <Screen
         name="Login"
         component={LoginScreen}
-      />
+      />
+
+      <Screen
+  name='Forgot'
+  component={ForgotScreen}
+      />
+
+      <Screen
+      name='Register'
+      component={RegisterScreen}
+      />
+
+    <Screen
+    name = 'Maintabs'
+    component={BottomTabs}
+    />
+
+    <Screen
+    name='EditProfile'
+    component= { EditProfile}/>
+    </Navigator>
+    
+  );
+};
+
+export default AuthStack;
