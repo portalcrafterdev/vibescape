@@ -47,4 +47,29 @@ export const searchData = [
     views: '3.1M',
     isVideo: true,
   },
-  {
+  {
+    id: '9',
+    image: 'https://images.unsplash.com/photo-1511988617509-a57c8a288659?w=800',
+    views: '85K',
+    isVideo: true,
+  },
+   {
+    id: '10',
+    image: 'https://images.unsplash.com/photo-1511988617509-a57c8a288659?w=800',
+    views: '85K',
+    isVideo: true,
+  },
+   {
+    id: '11',
+    image: 'https://images.unsplash.com/photo-1511988617509-a57c8a288659?w=800',
+    views: '85K',
+    isVideo: true,
+  },
+   {
+    id: '12',
+    image: 'https://images.unsplash.com/photo-1511988617509-a57c8a288659?w=800',
+    views: '85K',
+    isVideo: true,
+  },
+
+];
