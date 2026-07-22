@@ -65,4 +65,26 @@ export const reels = [
 },
 
     album: 'https://i.pravatar.cc/150?img=12',
-    caption: 'Coding all night 💻',
+    caption: 'Coding all night 💻',
+    likes: '8.3K',
+    comments: '190',
+  },
+
+{
+      id: '6',
+    username: 'developer',
+    profile: 'https://i.pravatar.cc/150?img=2',
+    video: {
+  uri: 'https://filesamples.com/samples/video/mp4/sample_960x540.mp4'
+},
+
+    album: 'https://i.pravatar.cc/150?img=12',
+    caption: 'Coding all night 💻',
+    likes: '8.3K',
+    comments: '190',
+  },
+
+
+
+  
+];
