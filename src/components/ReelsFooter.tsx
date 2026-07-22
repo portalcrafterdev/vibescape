@@ -102,4 +102,25 @@ const styles = StyleSheet.create({
 
   musicRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+
+  musicText: {
+    color: '#fff',
+    marginLeft: 8,
+    flex: 1,
+    fontSize: 13,
+  },
+
+  likes: {
+    color: '#ddd',
+    marginTop: 10,
+    fontSize: 13,
+  },
+
+  bold: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+});
