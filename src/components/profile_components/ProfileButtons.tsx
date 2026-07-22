@@ -45,4 +45,28 @@ const styles = StyleSheet.create({
     },
 
     button:{
-        flex: 1,
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        height: 32,
+        backgroundColor: '#262626',
+        borderRadius: 8,
+    },
+
+    buttonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+    addButton: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#262626',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+
+});
