@@ -46,4 +46,29 @@ export default SearchScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#000',
+  },
+
+  listContent: {
+    paddingBottom: 90,
+  },
+
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#262626',
+    marginHorizontal: 12,
+    marginTop: 10,
+    marginBottom: 10,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 42,
+  },
+
+  input: {
+    flex: 1,
+    color: '#fff',
+    marginLeft: 8,
+    fontSize: 15,
+  },
+});
