@@ -79,4 +79,24 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
   },
-
+
+  newHighlight: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: '#3a3a3a',
+    backgroundColor: '#111',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  title: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '500',
+    marginTop: 8,
+    width: 70,
+    textAlign: 'center',
+  },
+});
