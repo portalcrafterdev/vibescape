@@ -38,4 +38,24 @@ const ReelsScreen = () => {
         )}
         pagingEnabled
         snapToInterval={height}
-        decelerationRate="fast"
+        decelerationRate="fast"
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+        initialNumToRender={2}
+        maxToRenderPerBatch={2}
+        viewabilityConfig={viewabilityConfig}
+        windowSize={3}
+        onViewableItemsChanged={onViewableItemsChanged}
+      />
+    </View>
+  );
+};
+
+export default ReelsScreen;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+});
