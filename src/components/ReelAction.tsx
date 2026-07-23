@@ -78,4 +78,24 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 11,
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: 2,
+  },
+
+  albumContainer: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fff',
+    backgroundColor: '#111',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10
+  },
+
+  albumImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+  },
+});
