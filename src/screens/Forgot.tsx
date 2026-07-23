@@ -163,4 +163,28 @@ const styles = StyleSheet.create({
 
   line: {
     flex: 1,
-    height: 1,
+    height: 1,
+    backgroundColor: '#444',
+  },
+
+  or: {
+    color: '#aaa',
+    marginHorizontal: 10,
+  },
+
+  createAccount: {
+    color: '#3797EF',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+
+  bottom: {
+    marginTop: 40,
+  },
+
+  backLogin: {
+    color: '#fff',
+    textAlign: 'center',
+  },
+});
