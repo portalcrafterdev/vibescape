@@ -139,4 +139,28 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
     marginTop: 2,
-  },
+  },
+
+  bioContainer: {
+    marginTop: 18,
+  },
+
+  name: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  bio: {
+    color: '#fff',
+    fontSize: 15,
+    marginTop: 3,
+  },
+
+  link: {
+    color: '#4da6ff',
+    fontSize: 15,
+    marginTop: 3,
+    fontWeight: '600',
+  },
+});
