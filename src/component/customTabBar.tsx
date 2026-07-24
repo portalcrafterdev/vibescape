@@ -102,4 +102,25 @@ const styles = StyleSheet.create({
       width: 0,
       height: 8,
     },
-
+
+    shadowOpacity: 0.15,
+
+    shadowRadius: 10,
+
+    elevation: 12,
+  },
+
+  tabButton: {
+    width: 62,
+    height: 47,
+
+    justifyContent: 'center',
+    alignItems: 'center',
+
+    borderRadius: 24,
+  },
+
+  activeButton: {
+    backgroundColor: '#E8E8E8',
+  },
+});
