@@ -36,3 +36,22 @@ const ProfileScreen = () => {
         {activeTab === 'posts' && <ProfileGrid />}
 
         {activeTab === 'reels' && <Text>This is reel screen</Text>}
+
+        {activeTab === 'tagged' && <Text>This is Tagged Screen</Text>}
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+export default ProfileScreen;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+
+  content: {
+    paddingBottom: 80,
+  },
+});
