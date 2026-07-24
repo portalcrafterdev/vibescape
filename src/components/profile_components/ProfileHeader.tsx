@@ -48,4 +48,30 @@ const styles = StyleSheet.create({
     height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-  },
+  },
+
+    usernameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+    username: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
+    marginRight: 4,
+  },
+
+   rightIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+   iconButton: {
+    marginLeft: 18,
+  },
+
+
+
+
+})
