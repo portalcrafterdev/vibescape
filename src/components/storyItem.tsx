@@ -59,4 +59,25 @@ const styles = StyleSheet.create({
     height: 68,
     borderRadius: 34,
   },
-
+
+  name: {
+    color: '#fff',
+    fontSize: 12,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+
+  plusButton: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#0095F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+});
