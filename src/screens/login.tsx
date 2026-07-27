@@ -207,6 +207,7 @@ const styles = StyleSheet.create({
   scrollcontainer: {
     flexGrow: 1,
     justifyContent: 'center',
+    color: "black"
 
   }
 });
