@@ -91,4 +91,28 @@ const styles = StyleSheet.create({
 
   reels: {
     color: 'white',
-    fontSize: 28,
+    fontSize: 28,
+    fontWeight: '700',
+    marginRight: 5,
+  },
+
+  right: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  friendText: {
+    color: 'white',
+    fontSize: 18,
+    marginRight: 10,
+    fontWeight: '600',
+  },
+
+  avatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+});
