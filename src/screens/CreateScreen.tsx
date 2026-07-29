@@ -3,6 +3,7 @@ import { View, StyleSheet} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MessageHeader from "../components/Message_components/MessageHeader";
 import MessageSearchBar from "../components/Message_components/MessageSearchBar";
+import NoteSection from "../components/Message_components/NoteSection";
 
 const CreateScreen = ()=>{
     return(
@@ -10,6 +11,7 @@ const CreateScreen = ()=>{
     <View>
         <MessageHeader/>
         <MessageSearchBar/>
+        <NoteSection/>
     </View>
 </SafeAreaView>
     )
