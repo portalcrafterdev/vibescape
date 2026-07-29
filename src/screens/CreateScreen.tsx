@@ -1,16 +1,27 @@
 import React from "react";
-import { View, Text } from "react-native";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../types/navigation";
+import { View, StyleSheet} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import MessageHeader from "../components/Message_components/MessageHeader";
+import MessageSearchBar from "../components/Message_components/MessageSearchBar";
+import NoteSection from "../components/Message_components/NoteSection";
 
 const CreateScreen = ()=>{
     return(
-        <View style={{flex:1, justifyContent: "center", alignItems: "center"}}>
-            <Text>
-                This is Home Screen 
-            </Text>
-        </View>
+<SafeAreaView style= {styles.container}>
+    <View>
+        <MessageHeader/>
+        <MessageSearchBar/>
+        <NoteSection/>
+    </View>
+</SafeAreaView>
     )
 }
 
 export default CreateScreen;
+
+const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: "#000"
+    }
+})

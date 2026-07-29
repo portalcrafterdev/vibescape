@@ -5,4 +5,6 @@ export type RootStackParamList = {
   Register: undefined;
   Maintabs : undefined;
   EditProfile: undefined;
+  LinkPage: undefined;
+  BannerScreen: undefined;
 };

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Image , Text} from "react-native";
+import { View, StyleSheet, Image , Text, TouchableOpacity} from "react-native";
 
 const EditImage = ()=>{
     return (
@@ -8,7 +8,9 @@ const EditImage = ()=>{
      
     </Image>
 
-    <Text></Text>
+<TouchableOpacity>
+    <Text style={styles.txt}>Edit Picture or Avatar</Text>
+    </TouchableOpacity>
    </View>
     )
 }
@@ -26,5 +28,11 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         paddingTop: 38,
-    }
+    },
+
+    txt:{
+       color: "#6C63FF",
+       fontWeight: "700",
+       marginTop: 15
+    },
 })

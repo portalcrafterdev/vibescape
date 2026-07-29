@@ -1,13 +1,15 @@
 import React, { Profiler } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import splashscreen from '../screens/Splash';
+import splashscreen from '../screens/splash';
 import LoginScreen from '../screens/login';
 import ForgotScreen from '../screens/Forgot'
 import RegisterScreen from '../screens/Register';
 import { RootStackParamList } from '../types/navigation';
 import BottomTabs from './Bottom';
 import EditProfile from '../screens/EditProfile';
+import LinkPage from '../components/Edit_Profile/Linkspage';
+import BannerScreen from '../components/Edit_Profile/BannerScreen';
 
 const {Navigator , Screen} = createNativeStackNavigator<RootStackParamList>();
 
@@ -42,7 +44,19 @@ const AuthStack = () => {
     <Screen
     name='EditProfile'
     component= { EditProfile}/>
+
+    
+    <Screen
+    name='LinkPage'
+    component= { LinkPage}/>
+    
+        <Screen
+    name='BannerScreen'
+    component= { BannerScreen}/>
+
+    
     </Navigator>
+
     
   );
 };
