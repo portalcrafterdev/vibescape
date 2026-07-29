@@ -2,7 +2,9 @@ import { ArrowLeft, Plus } from "lucide-react-native";
 import React from "react";
 import {View, StyleSheet, TouchableOpacity, Text} from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context";
-import FacebookIcon from "../icons/FacebookIcon";
+import FacebookIcon from "../icons/FacebookIcon.tsx";
+import WhatsappIcon from "../icons/WhatsappIcon.tsx";
+import MusicIcon from "../icons/MusicIcon.tsx";
 
 const BannerScreen = ()=>{
     return(
@@ -29,20 +31,77 @@ const BannerScreen = ()=>{
    </View>
 
    <Text style={styles.addToProfile}>Add to Profile</Text>
-
+ 
+ //facebook Row
    <View style={styles.iconRow}>
+ 
+ //plus button
+    <TouchableOpacity>
     <View style={styles.iconCircle}>
     <Plus
-    size={14}
+    size={18}
     color={"#fff"}
     />
     </View>
+    </TouchableOpacity>
+
+  // facebook icon  
+    <TouchableOpacity>
      <View style={styles.iconCircle}>
-
- <FacebookIcon size={14} color={"#fff"}/>
-
+     <FacebookIcon height={40} width={40} color={"#fff"}/>
      </View>
+     </TouchableOpacity>
+
+   <Text style={{fontSize: 20, fontWeight: "600", color: "#fff"}}> Facebook Profile</Text>
    </View>
+
+    //Whatsapp Row
+   <View style={styles.iconRow}>
+ 
+ //plus button
+    <TouchableOpacity>
+    <View style={styles.iconCircle}>
+    <Plus
+    size={18}
+    color={"#fff"}
+    />
+    </View>
+    </TouchableOpacity>
+
+  // Whatsapp icon  
+    <TouchableOpacity>
+     <View style={styles.iconCircle}>
+     <WhatsappIcon height={27} width={27} color={"#fff"}/>
+     </View>
+     </TouchableOpacity>
+
+   <Text style={{fontSize: 20, fontWeight: "600", color: "#fff"}}> Whatsapp</Text>
+   </View>
+   
+
+    //facebook Row
+   <View style={styles.iconRow}>
+ 
+ //plus button
+    <TouchableOpacity>
+    <View style={styles.iconCircle}>
+    <Plus
+    size={18}
+    color={"#fff"}
+    />
+    </View>
+    </TouchableOpacity>
+
+  // facebook icon  
+    <TouchableOpacity>
+     <View style={styles.iconCircle}>
+     <MusicIcon height={18} width={18} color={"#fff"}/>
+     </View>
+     </TouchableOpacity>
+
+   <Text style={{fontSize: 20, fontWeight: "600", color: "#fff"}}> Music</Text>
+   </View>
+
 
    </View>
   </SafeAreaView>
@@ -106,13 +165,14 @@ iconRow: {
     marginHorizontal: 18,
 },
 iconCircle: {
-    height: 15,
-    width: 15,
+    height: 25,
+    width: 25,
     borderWidth: 1,
     borderColor: "#fff",
     borderRadius: 45,
     backgroundColor: "#000",
     alignItems: "center",
     justifyContent: "center",
+    marginRight:12
 }
 });

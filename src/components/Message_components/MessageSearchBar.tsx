@@ -22,7 +22,7 @@ export default MessageSearchBar;
 
 const styles = StyleSheet.create({
  container: {
-    marginTop: 20,
+    marginTop: 12,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#262626",

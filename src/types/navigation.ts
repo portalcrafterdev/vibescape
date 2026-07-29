@@ -7,4 +7,5 @@ export type RootStackParamList = {
   EditProfile: undefined;
   LinkPage: undefined;
   BannerScreen: undefined;
+  GenderScreen: undefined;
 };

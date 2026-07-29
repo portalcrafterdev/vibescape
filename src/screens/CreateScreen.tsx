@@ -1,18 +1,24 @@
 import React from "react";
-import { View, StyleSheet} from "react-native";
+import { View, StyleSheet, ScrollView} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MessageHeader from "../components/Message_components/MessageHeader";
 import MessageSearchBar from "../components/Message_components/MessageSearchBar";
 import NoteSection from "../components/Message_components/NoteSection";
+import MessagesTitle from "../components/Message_components/MessagesTitle";
+import MessageList from "../components/Message_components/MessageList";
 
 const CreateScreen = ()=>{
     return(
 <SafeAreaView style= {styles.container}>
-    <View>
+    <ScrollView>
+    <View style={styles.content}>
         <MessageHeader/>
         <MessageSearchBar/>
         <NoteSection/>
+        <MessagesTitle/>
+        <MessageList/>
     </View>
+    </ScrollView>
 </SafeAreaView>
     )
 }
@@ -23,5 +29,9 @@ const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: "#000"
+    },
+
+    content: {
+      flex: 1
     }
 })
