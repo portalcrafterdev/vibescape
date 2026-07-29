@@ -10,6 +10,7 @@ import BottomTabs from './Bottom';
 import EditProfile from '../screens/EditProfile';
 import LinkPage from '../components/Edit_Profile/Linkspage';
 import BannerScreen from '../components/Edit_Profile/BannerScreen';
+import GenderScreen from '../components/Edit_Profile/GenderScreen';
 
 const {Navigator , Screen} = createNativeStackNavigator<RootStackParamList>();
 
@@ -50,9 +51,14 @@ const AuthStack = () => {
     name='LinkPage'
     component= { LinkPage}/>
     
-        <Screen
+    <Screen
     name='BannerScreen'
     component= { BannerScreen}/>
+  
+    <Screen
+    name='GenderScreen'
+    component= { GenderScreen}/>
+    
 
     
     </Navigator>
