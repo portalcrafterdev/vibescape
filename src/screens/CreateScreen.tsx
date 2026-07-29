@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import MessageHeader from "../components/Message_components/MessageHeader";
 import MessageSearchBar from "../components/Message_components/MessageSearchBar";
 import NoteSection from "../components/Message_components/NoteSection";
+import MessagesTitle from "../components/Message_components/MessagesTitle";
 
 const CreateScreen = ()=>{
     return(
@@ -12,6 +13,7 @@ const CreateScreen = ()=>{
         <MessageHeader/>
         <MessageSearchBar/>
         <NoteSection/>
+        <MessagesTitle/>
     </View>
 </SafeAreaView>
     )
