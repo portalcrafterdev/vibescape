@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vibescape API</title>
+<style>
+  :root {
+    --ground:#f6f7f9; --surface:#fff; --surface-2:#eef0f4;
+    --line:#d8dce3; --line-soft:#e6e9ee;
+    --ink:#10151c; --ink-2:#3d4654; --ink-3:#6b7585;
+    --accent:#d81b60;
+    --get:#0b5fa5; --get-bg:#e2eefa;
+    --post:#1a7f4b; --post-bg:#e3f4ea;
+    --patch:#8a5a00; --patch-bg:#fbeed2;
+    --delete:#b3261e; --delete-bg:#fbe4e2;
+    --mono: ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+    --sans: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#0b0e13; --surface:#131820; --surface-2:#1a212b;
+      --line:#2a323e; --line-soft:#212933;
+      --ink:#eef1f6; --ink-2:#b6c0ce; --ink-3:#7d8896;
+      --accent:#ff4f8b;
+      --get:#6fb5f0; --get-bg:#10202f;
+      --post:#5cd693; --post-bg:#10281c;
+      --patch:#e8b451; --patch-bg:#2a2011;
+      --delete:#ff7b72; --delete-bg:#2c1614;
+      color-scheme: dark;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+       font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto;padding:36px 22px 90px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:22px;margin-bottom:28px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+           text-transform:uppercase;color:var(--ink-3)}
+  h1{font-size:34px;line-height:1.1;letter-spacing:-.025em;margin:10px 0 8px;font-weight:680}
+  .meta{display:flex;flex-wrap:wrap;gap:6px 26px;font-family:var(--mono);
+        font-size:12.5px;color:var(--ink-3);margin-top:10px}
+  .meta b{color:var(--ink-2);font-weight:500}
+  .tag-group{margin:34px 0 0}
+  .tag-group h2{font-size:19px;letter-spacing:-.02em;margin:0 0 14px;
+                border-bottom:1px solid var(--line);padding-bottom:9px;
+                text-transform:capitalize}
+  details.op{border:1px solid var(--line);border-radius:6px;background:var(--surface);
+             margin-bottom:10px;overflow:hidden}
+  details.op[open]{border-color:var(--ink-3)}
+  summary{display:flex;align-items:center;gap:11px;padding:12px 15px;cursor:pointer;
+          background:var(--surface-2);list-style:none;flex-wrap:wrap}
+  summary::-webkit-details-marker{display:none}
+  summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .verb{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.07em;
+        padding:3px 8px;border-radius:3px;background:var(--get-bg);color:var(--get)}
+  .verb.post{background:var(--post-bg);color:var(--post)}
+  .verb.put,.verb.patch{background:var(--patch-bg);color:var(--patch)}
+  .verb.delete{background:var(--delete-bg);color:var(--delete)}
+  .op-path{font-family:var(--mono);font-size:13.5px;font-weight:600}
+  .op-sum{font-size:13px;color:var(--ink-3);margin-left:auto}
+  .op-body{padding:16px 15px;display:flex;flex-direction:column;gap:16px;
+           border-top:1px solid var(--line)}
+  .op-body p{margin:0;color:var(--ink-2);max-width:68ch}
+  .label{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;
+         text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
+  pre{font-family:var(--mono);font-size:12.5px;line-height:1.6;background:var(--surface-2);
+      border:1px solid var(--line-soft);border-radius:5px;padding:12px 14px;
+      overflow-x:auto;margin:0;color:var(--ink-2)}
+  .t-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line-soft);
+        vertical-align:top}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+     color:var(--ink-3);font-weight:500;border-bottom:1px solid var(--line);white-space:nowrap}
+  td.mono{font-family:var(--mono);font-size:12.5px}
+  tbody tr:last-child td{border-bottom:none}
+  .req{color:var(--accent);font-family:var(--mono);font-size:11px}
+  .code-pill{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;
+             padding:2px 7px;border-radius:3px;background:var(--surface-2);color:var(--ink-2);
+             border:1px solid var(--line-soft)}
+  .code-pill.s2{background:var(--post-bg);color:var(--post);border-color:transparent}
+  .code-pill.s4{background:var(--patch-bg);color:var(--patch);border-color:transparent}
+  .code-pill.s5{background:var(--delete-bg);color:var(--delete);border-color:transparent}
+  footer{margin-top:44px;border-top:1px solid var(--line);padding-top:18px;
+         color:var(--ink-3);font-size:13px}
+  a{color:var(--accent)}
+  .msg{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:6px;
+       background:var(--surface);padding:16px 18px;color:var(--ink-2)}
+  .msg b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Vibescape · Backend</div>
+    <h1 id="title">API Reference</h1>
+    <div class="meta" id="meta"></div>
+  </header>
+  <main id="out"><div class="msg">Loading schema…</div></main>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var out = document.getElementById("out");
+  var VERBS = ["get", "post", "put", "patch", "delete", "head", "options"];
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = String(text);
+    return n;
+  }
+
+  // Follow a local $ref like "#/components/schemas/Foo".
+  function deref(spec, node, seen) {
+    if (!node || typeof node !== "object") return node;
+    if (!node.$ref) return node;
+    if (node.$ref.indexOf("#/") !== 0) return node;
+    seen = seen || {};
+    if (seen[node.$ref]) return { type: "object", title: "(recursive)" };
+    seen[node.$ref] = true;
+    var target = spec;
+    var parts = node.$ref.slice(2).split("/");
+    for (var i = 0; i < parts.length; i++) {
+      target = target && target[parts[i].replace(/~1/g, "/").replace(/~0/g, "~")];
+    }
+    return deref(spec, target, seen);
+  }
+
+  // Render a schema as a compact type expression.
+  function typeName(spec, schema) {
+    schema = deref(spec, schema);
+    if (!schema) return "any";
+    if (schema.enum) return schema.enum.map(function (v) { return JSON.stringify(v); }).join(" | ");
+    if (schema.anyOf || schema.oneOf) {
+      return (schema.anyOf || schema.oneOf).map(function (s) { return typeName(spec, s); }).join(" | ");
+    }
+    if (schema.type === "array") return typeName(spec, schema.items) + "[]";
+    if (schema.type) return schema.type;
+    if (schema.properties) return "object";
+    return "any";
+  }
+
+  function fieldTable(spec, schema) {
+    schema = deref(spec, schema);
+    if (!schema || !schema.properties) return null;
+    var required = schema.required || [];
+    var wrap = el("div", "t-wrap");
+    var table = el("table");
+    var thead = el("thead");
+    var hr = el("tr");
+    ["Field", "Type", "Description"].forEach(function (h) {
+      var th = el("th", null, h);
+      hr.appendChild(th);
+    });
+    thead.appendChild(hr);
+    table.appendChild(thead);
+    var tbody = el("tbody");
+    Object.keys(schema.properties).forEach(function (name) {
+      var prop = schema.properties[name];
+      var tr = el("tr");
+      var tdName = el("td", "mono");
+      tdName.appendChild(el("b", null, name));
+      if (required.indexOf(name) !== -1) {
+        tdName.appendChild(document.createTextNode(" "));
+        tdName.appendChild(el("span", "req", "required"));
+      }
+      tr.appendChild(tdName);
+      tr.appendChild(el("td", "mono", typeName(spec, prop)));
+      var resolved = deref(spec, prop);
+      tr.appendChild(el("td", null, (resolved && (resolved.description || resolved.title)) || ""));
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return wrap;
+  }
+
+  function block(labelText, node) {
+    var d = el("div");
+    d.appendChild(el("div", "label", labelText));
+    d.appendChild(node);
+    return d;
+  }
+
+  function statusClass(code) {
+    if (code.charAt(0) === "2") return "code-pill s2";
+    if (code.charAt(0) === "4") return "code-pill s4";
+    if (code.charAt(0) === "5") return "code-pill s5";
+    return "code-pill";
+  }
+
+  function renderOp(spec, path, method, op) {
+    var det = el("details", "op");
+    var sum = el("summary");
+    sum.appendChild(el("span", "verb " + method, method.toUpperCase()));
+    sum.appendChild(el("span", "op-path", path));
+    if (op.summary) sum.appendChild(el("span", "op-sum", op.summary));
+    det.appendChild(sum);
+
+    var body = el("div", "op-body");
+
+    if (op.description) body.appendChild(el("p", null, op.description.trim()));
+
+    // Parameters
+    var params = (op.parameters || []).map(function (p) { return deref(spec, p); });
+    if (params.length) {
+      var pw = el("div", "t-wrap");
+      var pt = el("table");
+      var pth = el("thead");
+      var ptr = el("tr");
+      ["Name", "In", "Type", "Description"].forEach(function (h) { ptr.appendChild(el("th", null, h)); });
+      pth.appendChild(ptr);
+      pt.appendChild(pth);
+      var ptb = el("tbody");
+      params.forEach(function (p) {
+        var tr = el("tr");
+        var td0 = el("td", "mono");
+        td0.appendChild(el("b", null, p.name));
+        if (p.required) {
+          td0.appendChild(document.createTextNode(" "));
+          td0.appendChild(el("span", "req", "required"));
+        }
+        tr.appendChild(td0);
+        tr.appendChild(el("td", "mono", p.in));
+        tr.appendChild(el("td", "mono", typeName(spec, p.schema)));
+        tr.appendChild(el("td", null, p.description || ""));
+        ptb.appendChild(tr);
+      });
+      pt.appendChild(ptb);
+      pw.appendChild(pt);
+      body.appendChild(block("Parameters", pw));
+    }
+
+    // Request body
+    var rb = deref(spec, op.requestBody);
+    if (rb && rb.content) {
+      var ct = Object.keys(rb.content)[0];
+      var reqTable = fieldTable(spec, rb.content[ct].schema);
+      if (reqTable) body.appendChild(block("Request body — " + ct, reqTable));
+    }
+
+    // Responses
+    if (op.responses) {
+      var rw = el("div", "t-wrap");
+      var rt = el("table");
+      var rth = el("thead");
+      var rtr = el("tr");
+      ["Code", "Body", "Description"].forEach(function (h) { rtr.appendChild(el("th", null, h)); });
+      rth.appendChild(rtr);
+      rt.appendChild(rth);
+      var rtb = el("tbody");
+      Object.keys(op.responses).forEach(function (code) {
+        var r = deref(spec, op.responses[code]);
+        var tr = el("tr");
+        var td0 = el("td");
+        td0.appendChild(el("span", statusClass(code), code));
+        tr.appendChild(td0);
+        var shape = "—";
+        if (r.content) {
+          var rct = Object.keys(r.content)[0];
+          var sch = deref(spec, r.content[rct].schema);
+          shape = (sch && (sch.title || typeName(spec, sch))) || rct;
+        }
+        tr.appendChild(el("td", "mono", shape));
+        tr.appendChild(el("td", null, r.description || ""));
+        rtb.appendChild(tr);
+      });
+      rt.appendChild(rtb);
+      rw.appendChild(rt);
+      body.appendChild(block("Responses", rw));
+
+      // Response schema detail for the first 2xx
+      var okCode = Object.keys(op.responses).filter(function (c) { return c.charAt(0) === "2"; })[0];
+      if (okCode) {
+        var okRes = deref(spec, op.responses[okCode]);
+        if (okRes && okRes.content) {
+          var okCt = Object.keys(okRes.content)[0];
+          var okTable = fieldTable(spec, okRes.content[okCt].schema);
+          if (okTable) body.appendChild(block("Response schema — " + okCode, okTable));
+        }
+      }
+    }
+
+    // curl
+    var origin = window.location.origin;
+    var curl = "curl -s -X " + method.toUpperCase() + " " + origin + path;
+    if (rb) curl += " \\\n  -H 'Content-Type: application/json' \\\n  -d '{}'";
+    if (op.security && op.security.length) curl += " \\\n  -H 'Authorization: Bearer $TOKEN'";
+    body.appendChild(block("Try it", el("pre", null, curl)));
+
+    det.appendChild(body);
+    return det;
+  }
+
+  function render(spec) {
+    document.title = (spec.info && spec.info.title) || "API";
+    document.getElementById("title").textContent = (spec.info && spec.info.title) || "API Reference";
+
+    var meta = document.getElementById("meta");
+    meta.textContent = "";
+    function metaItem(k, v) {
+      var s = el("span");
+      s.appendChild(el("b", null, k));
+      s.appendChild(document.createTextNode(" " + v));
+      meta.appendChild(s);
+    }
+    metaItem("Version", (spec.info && spec.info.version) || "—");
+    metaItem("OpenAPI", spec.openapi || "—");
+    metaItem("Base", window.location.origin);
+
+    var paths = spec.paths || {};
+    var groups = {};
+    var total = 0;
+
+    Object.keys(paths).sort().forEach(function (path) {
+      VERBS.forEach(function (method) {
+        var op = paths[path][method];
+        if (!op) return;
+        total += 1;
+        var tag = (op.tags && op.tags[0]) || "default";
+        (groups[tag] = groups[tag] || []).push({ path: path, method: method, op: op });
+      });
+    });
+
+    out.textContent = "";
+
+    if (!total) {
+      var empty = el("div", "msg");
+      empty.appendChild(el("b", null, "No operations in the schema."));
+      empty.appendChild(document.createTextNode(" The server is running but exposes no routes yet."));
+      out.appendChild(empty);
+      return;
+    }
+
+    Object.keys(groups).sort().forEach(function (tag) {
+      var g = el("section", "tag-group");
+      g.appendChild(el("h2", null, tag));
+      groups[tag].forEach(function (entry) {
+        g.appendChild(renderOp(spec, entry.path, entry.method, entry.op));
+      });
+      out.appendChild(g);
+    });
+
+    document.getElementById("foot").textContent =
+      total + " operation" + (total === 1 ? "" : "s") +
+      " · generated from the live OpenAPI schema on page load";
+  }
+
+  function fail(message) {
+    out.textContent = "";
+    var m = el("div", "msg");
+    m.appendChild(el("b", null, "Could not load the schema. "));
+    m.appendChild(document.createTextNode(message));
+    out.appendChild(m);
+  }
+
+  // An inlined spec (written by the export script) wins; otherwise fetch the live one.
+  // The URL is substituted at serve time so a proxy prefix is handled correctly.
+  if (window.__OPENAPI__) {
+    render(window.__OPENAPI__);
+  } else {
+    fetch("__OPENAPI_URL__", { credentials: "same-origin" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(render)
+      .catch(function (e) {
+        fail("Is the server running, and is ENABLE_DOCS on? (" + e.message + ")");
+      });
+  }
+})();
+</script>
+</body>
+</html>

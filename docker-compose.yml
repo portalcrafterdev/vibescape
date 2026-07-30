@@ -1,0 +1,68 @@
+# Local development stack for the Vibescape backend.
+#
+#   docker compose up -d
+#   docker compose exec api alembic upgrade head
+#
+# Ports are deliberately offset from the Homebrew Postgres (5432) and Redis (6379)
+# already running on this machine, so the two setups can coexist.
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: vibescape
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vibescape_dev_only}
+      POSTGRES_DB: vibescape_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vibescape -d vibescape_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "no"]
+    ports:
+      - "6380:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      ENVIRONMENT: development
+      DEBUG: "true"
+      # Service names resolve on the compose network; internal ports, not the
+      # host-mapped ones above.
+      DATABASE_URL: postgresql+asyncpg://vibescape:${POSTGRES_PASSWORD:-vibescape_dev_only}@db:5432/vibescape_dev
+      REDIS_URL: redis://redis:6379/1
+      CORS_ORIGINS: http://localhost:8081
+      SECRET_KEY: ${SECRET_KEY:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Source mount + reload for local iteration. Remove both for any deployed use.
+    volumes:
+      - ./backend:/app
+      - /app/.venv
+    command:
+      ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+volumes:
+  pgdata:
+  redisdata:
