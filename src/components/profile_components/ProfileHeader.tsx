@@ -1,8 +1,10 @@
 import React from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { AtSign, ChevronDown, Plus, Menu } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
 
 const ProfileHeader= ()=>{
+  const navigation = useNavigation<any>();
     return (
         <View style={styles.container}>
      <TouchableOpacity style={styles.plusButton}>
@@ -17,7 +19,7 @@ const ProfileHeader= ()=>{
 
        <View style={styles.rightIcons}>
 
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity style={styles.iconButton} onPress={()=>navigation.push('ThreadsScreen')}>
             <AtSign color={"white"} size={22}/>
         </TouchableOpacity>
 

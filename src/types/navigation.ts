@@ -8,4 +8,5 @@ export type RootStackParamList = {
   LinkPage: undefined;
   BannerScreen: undefined;
   GenderScreen: undefined;
+  ThreadsScreen: undefined;
 };
