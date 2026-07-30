@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -10,12 +11,9 @@ import {
   View,
 } from 'react-native';
 
-import { ActivityIndicator } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import { useAuth } from '../auth/AuthContext';
-import { ApiError } from '../api/client';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 
@@ -28,59 +26,39 @@ const RegisterScreen = ({ navigation }: Props) => {
 
   const [hidePassword, setHidePassword] = useState(true);
   const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const { signUp } = useAuth();
-
-  const register = async () => {
+  const register = () => {
     if (!name.trim()) {
-      setError('Please enter your full name.');
+      Alert.alert('Error', 'Please enter your full name.');
       return;
     }
 
     if (!username.trim()) {
-      setError('Please enter your username.');
+      Alert.alert('Error', 'Please enter your username.');
       return;
     }
 
     if (!email.trim()) {
-      setError('Please enter your email.');
+      Alert.alert('Error', 'Please enter your email.');
       return;
     }
 
-    // Matches the server's minimum. Checking here saves a round trip and gives the
-    // rule before the user commits to a password.
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.');
+    if (!password.trim()) {
+      Alert.alert('Error', 'Please enter your password.');
+      return;
+    }
+
+    if (!confirmPassword.trim()) {
+      Alert.alert('Error', 'Please confirm your password.');
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      Alert.alert('Error', 'Passwords do not match.');
       return;
     }
 
-    setError(null);
-    setSubmitting(true);
-
-    try {
-      await signUp({
-        username: username.trim().toLowerCase(),
-        email: email.trim().toLowerCase(),
-        password,
-      });
-      // RootNavigator swaps stacks once the user is set; nothing to navigate to.
-    } catch (err) {
-      if (err instanceof ApiError) {
-        // Field errors are more useful than the generic message when present.
-        setError(err.fieldErrors.length ? err.fieldErrors[0].reason : err.message);
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
-    } finally {
-      setSubmitting(false);
-    }
+    Alert.alert('Success', 'Account Created Successfully');
   };
 
   return (
@@ -171,20 +149,13 @@ const RegisterScreen = ({ navigation }: Props) => {
           </TouchableOpacity>
         </View>
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
         <TouchableOpacity
-          style={[styles.button, submitting && styles.buttonDisabled]}
+          style={styles.button}
           onPress={register}
-          disabled={submitting}
         >
-          {submitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>
-              Sign Up
-            </Text>
-          )}
+          <Text style={styles.buttonText}>
+            Sign Up
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.bottomContainer}>
@@ -262,17 +233,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 15,
-  },
-
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-
-  error: {
-    color: '#ED4956',
-    fontSize: 13,
-    marginTop: 12,
-    textAlign: 'center',
   },
 
   buttonText: {

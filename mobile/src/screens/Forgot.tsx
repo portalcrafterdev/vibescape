@@ -11,44 +11,25 @@ import {
   ScrollView,
 } from 'react-native';
 
-import { ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { ArrowLeft } from 'lucide-react-native';
-import { forgotPassword } from '../api/auth';
-import { ApiError } from '../api/client';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Forgot'>;
 
 const ForgotScreen = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState(false);
 
-  const sendLink = async () => {
+  const sendLink = () => {
     if (!email.trim()) {
-      setError('Please enter your email address.');
+      Alert.alert('Error', 'Please enter your email, phone or username.');
       return;
     }
 
-    setError(null);
-    setSubmitting(true);
-
-    try {
-      await forgotPassword(email.trim().toLowerCase());
-      // The server answers identically whether or not the account exists, so the
-      // confirmation here must not imply one way or the other.
-      setSent(true);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
-    } finally {
-      setSubmitting(false);
-    }
+    Alert.alert(
+      'Success',
+      'A password reset link has been sent.'
+    );
   };
 
   return (
@@ -83,25 +64,13 @@ const ForgotScreen = ({ navigation }: Props) => {
           style={styles.input}
         />
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        {sent ? (
-          <Text style={styles.sent}>
-            If an account exists for that email, a reset link has been sent.
-          </Text>
-        ) : null}
-
         <TouchableOpacity
-          style={[styles.button, submitting && styles.buttonDisabled]}
+          style={styles.button}
           onPress={sendLink}
-          disabled={submitting}
         >
-          {submitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>
-              Send Login Link
-            </Text>
-          )}
+          <Text style={styles.buttonText}>
+            Send Login Link
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.orContainer}>
@@ -178,24 +147,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
-  },
-
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-
-  error: {
-    color: '#ED4956',
-    fontSize: 13,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-
-  sent: {
-    color: '#4BB543',
-    fontSize: 13,
-    marginBottom: 12,
-    textAlign: 'center',
   },
 
   buttonText: {

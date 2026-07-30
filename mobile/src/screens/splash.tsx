@@ -1,31 +1,37 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Image,
   StyleSheet,
   StatusBar,
-  ActivityIndicator,
 } from 'react-native';
 
-/**
- * Shown while the stored session is being restored.
- *
- * It no longer navigates on a timer. RootNavigator swaps the whole stack once
- * hydration finishes, so a fixed delay here would either cut the check short or
- * make an already-signed-in user wait for nothing.
- */
-const SplashScreen = () => {
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
+
+type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>;
+
+const SplashScreen = ({ navigation }: Props) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigation.replace('Login');
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor="#000" barStyle="light-content" />
+      <StatusBar
+        backgroundColor="#000"
+        barStyle="light-content"
+      />
 
       <Image
         source={require('../assets/images/clipart402911.png')}
         style={styles.logo}
         resizeMode="contain"
       />
-
-      <ActivityIndicator color="#fff" style={styles.spinner} />
     </View>
   );
 };
@@ -43,9 +49,5 @@ const styles = StyleSheet.create({
   logo: {
     width: 130,
     height: 130,
-  },
-
-  spinner: {
-    marginTop: 28,
   },
 });
