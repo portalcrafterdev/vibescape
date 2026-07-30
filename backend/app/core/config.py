@@ -38,6 +38,21 @@ class Settings(BaseSettings):
 
     MAX_REQUEST_BODY_BYTES: int = 10 * 1024 * 1024
 
+    PASSWORD_RESET_EXPIRE_MINUTES: int = 30
+
+    # Brute-force protection. Lock duration doubles per lockout, so a persistent
+    # attacker faces exponential delay while a fumbling user waits a minute.
+    MAX_FAILED_LOGINS: int = 5
+    LOCKOUT_BASE_MINUTES: int = 1
+    LOCKOUT_MAX_MINUTES: int = 60
+
+    # Sliding-window rate limits, per window seconds.
+    RATE_LIMIT_AUTH_PER_IP: int = 20
+    RATE_LIMIT_AUTH_WINDOW_SECONDS: int = 300
+    RATE_LIMIT_DEFAULT_PER_IP: int = 300
+    RATE_LIMIT_DEFAULT_WINDOW_SECONDS: int = 60
+    RATE_LIMIT_ENABLED: bool = True
+
     @field_validator("ENABLE_DOCS", mode="before")
     @classmethod
     def _blank_means_unset(cls, v: object) -> object:

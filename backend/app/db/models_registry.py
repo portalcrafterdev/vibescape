@@ -2,10 +2,10 @@
 
 Alembic autogenerate only sees models that have been imported. Add each new model
 module here when it is created, or its table will be silently missing from migrations.
-
-Phase 2 adds: User, RefreshToken.
 """
 
-from app.db.base import Base  # noqa: F401
+from app.db.base import Base
+from app.models.token import PasswordResetToken, RefreshToken
+from app.models.user import User
 
-__all__ = ["Base"]
+__all__ = ["Base", "PasswordResetToken", "RefreshToken", "User"]

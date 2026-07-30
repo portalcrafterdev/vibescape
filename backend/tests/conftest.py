@@ -1,10 +1,18 @@
+import uuid
 from collections.abc import AsyncGenerator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import delete
 
+from app.cache.redis import get_redis
 from app.core.config import get_settings
+from app.db.session import SessionLocal
 from app.main import app
+from app.models.token import PasswordResetToken, RefreshToken
+from app.models.user import User
+
+PREFIX = get_settings().API_V1_PREFIX
 
 
 @pytest.fixture
@@ -18,3 +26,60 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
+
+
+@pytest.fixture(autouse=True)
+async def clean_state() -> AsyncGenerator[None, None]:
+    """Remove rows and rate-limit keys this test created.
+
+    Scoped deliberately to our own key prefix — Redis here is shared with other
+    projects on the machine, so a FLUSHDB would destroy their data.
+    """
+    yield
+
+    async with SessionLocal() as session:
+        await session.execute(delete(PasswordResetToken))
+        await session.execute(delete(RefreshToken))
+        await session.execute(delete(User))
+        await session.commit()
+
+    try:
+        redis = get_redis()
+        for pattern in ("vibescape:ratelimit:*", "vibescape:denylist:*"):
+            keys = [key async for key in redis.scan_iter(match=pattern, count=500)]
+            if keys:
+                await redis.delete(*keys)
+    except Exception:  # noqa: BLE001 - cleanup must never fail a test run
+        pass
+
+
+@pytest.fixture
+def credentials() -> dict[str, str]:
+    """Unique per call so parallel or repeated runs never collide."""
+    suffix = uuid.uuid4().hex[:10]
+    return {
+        "username": f"user_{suffix}",
+        # example.com, not .test — the latter is a reserved TLD that email-validator
+        # rejects outright, which would be testing the validator rather than the API.
+        "email": f"user_{suffix}@example.com",
+        "password": "correct horse battery staple",
+    }
+
+
+@pytest.fixture
+async def registered(client: AsyncClient, credentials: dict[str, str]) -> dict:
+    """A registered, signed-in account. Returns the full auth payload plus credentials."""
+    resp = await client.post(f"{PREFIX}/auth/register", json=credentials)
+    assert resp.status_code == 201, resp.text
+    body = resp.json()
+    return {
+        "credentials": credentials,
+        "user": body["user"],
+        "access_token": body["tokens"]["access_token"],
+        "refresh_token": body["tokens"]["refresh_token"],
+    }
+
+
+@pytest.fixture
+def auth_headers(registered: dict) -> dict[str, str]:
+    return {"Authorization": f"Bearer {registered['access_token']}"}
