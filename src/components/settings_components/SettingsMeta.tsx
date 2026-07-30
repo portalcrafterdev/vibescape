@@ -8,7 +8,7 @@ const SettingsMeta = ()=>{
          <Text style={styles.txt}>
         Your account
          </Text>
-        <View>
+        <View style={{flexDirection:"row"}}>
          <MetaIcon/>
          <Text style={styles.metatxt}>Meta</Text>
 
@@ -23,6 +23,7 @@ const styles = StyleSheet.create({
   container:{
   flexDirection: "row",
   marginHorizontal: 20,
+  justifyContent: "space-between",
   marginTop:20,
   },
 
@@ -35,5 +36,6 @@ const styles = StyleSheet.create({
    color: "#fff",
    fontWeight: "700",
    fontSize: 17,
+   marginLeft:3,
   }
 });
