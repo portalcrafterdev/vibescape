@@ -1,3 +1,4 @@
+/* eslint-env jest */
 /**
  * Jest setup for native modules that have no JS implementation under test.
  */

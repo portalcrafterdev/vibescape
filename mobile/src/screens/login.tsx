@@ -7,15 +7,16 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   ScrollView,
   Image
 } from 'react-native';
 
+import { ActivityIndicator } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
-import HomeScreen from './HomeScreen';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
+import { useAuth } from '../auth/AuthContext';
+import { ApiError } from '../api/client';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -23,19 +24,38 @@ const LoginScreen = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [hidePassword, setHidePassword] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const login = () => {
+  const { signIn } = useAuth();
+
+  const login = async () => {
     if (!email.trim()) {
-      Alert.alert('Error', 'Enter Email');
+      setError('Enter your email or username.');
       return;
     }
 
-    if (!password.trim()) {
-      Alert.alert('Error', 'Enter Password');
+    if (!password) {
+      setError('Enter your password.');
       return;
     }
 
-    Alert.alert('Success', 'Login Button Pressed');
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      await signIn(email.trim(), password);
+      // No navigation call: RootNavigator swaps to the signed-in stack as soon as
+      // the user is set.
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Something went wrong. Please try again.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -94,13 +114,20 @@ const LoginScreen = ({ navigation }: Props) => {
         </Text>
       </TouchableOpacity>
 
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
       <TouchableOpacity
-        style={styles.loginButton}
-        onPress={()=> navigation.navigate('Maintabs')}
+        style={[styles.loginButton, submitting && styles.loginButtonDisabled]}
+        onPress={login}
+        disabled={submitting}
       >
-        <Text style={styles.loginText}>
-          Log In
-        </Text>
+        {submitting ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.loginText}>
+            Log In
+          </Text>
+        )}
       </TouchableOpacity>
 
 <View style={{flexDirection: "row"}}>
@@ -174,6 +201,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
+  },
+
+  loginButtonDisabled: {
+    opacity: 0.6,
+  },
+
+  error: {
+    color: '#ED4956',
+    fontSize: 13,
+    marginBottom: 12,
+    textAlign: 'center',
   },
 
   loginText: {

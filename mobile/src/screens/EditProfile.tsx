@@ -8,6 +8,7 @@ import EditProfileFields from "../components/Edit_Profile/EditProfileFields";
 import EditProfileLinks from "../components/Edit_Profile/EditProfileLinks";
 import EditProfileGender from "../components/Edit_Profile/EditProfileGender";
 import Reordergrid from "../components/Edit_Profile/ReorderGrid";
+import LogoutButton from "../components/Edit_Profile/LogoutButton";
 
 const EditProfile = ()=>{
     return (
@@ -24,6 +25,7 @@ const EditProfile = ()=>{
     <EditProfileLinks/>
     <EditProfileGender/>
     <Reordergrid/>
+    <LogoutButton/>
   </View>
   </ScrollView>      
   </SafeAreaView>
