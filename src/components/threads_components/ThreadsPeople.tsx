@@ -33,6 +33,7 @@ const ThreadsPeople = () => {
         style={[styles.person, styles.personFour]}
       />
 
+
       <Image
         source={{
           uri: "https://randomuser.me/api/portraits/men/75.jpg",
