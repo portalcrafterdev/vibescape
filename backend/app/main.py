@@ -30,10 +30,11 @@ def create_app() -> FastAPI:
         title=settings.PROJECT_NAME,
         version="0.1.0",
         lifespan=lifespan,
-        # Interactive docs expose the full API surface; keep them off in production.
-        docs_url="/docs" if settings.DEBUG else None,
-        redoc_url=None,
-        openapi_url="/openapi.json" if settings.DEBUG else None,
+        # The schema drives both the built-in Swagger UI and our own docs page at
+        # {API_V1_PREFIX}/docs, so it must be served whenever docs are enabled.
+        docs_url="/docs" if settings.ENABLE_DOCS else None,
+        redoc_url="/redoc" if settings.ENABLE_DOCS else None,
+        openapi_url=settings.OPENAPI_URL if settings.ENABLE_DOCS else None,
     )
 
     register_middleware(app, settings)

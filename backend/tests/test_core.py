@@ -56,6 +56,15 @@ class TestSettingsValidation:
         s = Settings(ENVIRONMENT="development", SECRET_KEY="", _env_file=None)
         assert len(s.SECRET_KEY) >= 40
 
+    def test_blank_enable_docs_falls_back_to_debug(self):
+        """A commented-out or empty value in .env must not crash startup."""
+        assert Settings(ENABLE_DOCS="", DEBUG=True, _env_file=None).ENABLE_DOCS is True
+        assert Settings(ENABLE_DOCS="", DEBUG=False, _env_file=None).ENABLE_DOCS is False
+
+    def test_enable_docs_overrides_debug(self):
+        s = Settings(ENABLE_DOCS=True, DEBUG=False, _env_file=None)
+        assert s.ENABLE_DOCS is True
+
 
 class TestErrorEnvelope:
     async def test_unknown_route_returns_envelope(self, client):

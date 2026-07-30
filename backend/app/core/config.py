@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     PROJECT_NAME: str = "Vibescape API"
 
+    # Serve the schema and docs pages. Separate from DEBUG so a shared staging box can
+    # expose docs without also turning on debug behaviour. Defaults to DEBUG's value.
+    ENABLE_DOCS: bool | None = None
+    OPENAPI_URL: str = "/openapi.json"
+
     DATABASE_URL: str = "postgresql+asyncpg://localhost:5432/vibescape_dev"
     REDIS_URL: str = "redis://localhost:6379/1"
 
@@ -32,6 +37,15 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     MAX_REQUEST_BODY_BYTES: int = 10 * 1024 * 1024
+
+    @field_validator("ENABLE_DOCS", mode="before")
+    @classmethod
+    def _blank_means_unset(cls, v: object) -> object:
+        # An empty value in .env means "not configured", not "invalid boolean".
+        # Without this, copying .env.example verbatim crashes the app at startup.
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
@@ -51,6 +65,9 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_secrets(self) -> "Settings":
+        if self.ENABLE_DOCS is None:
+            self.ENABLE_DOCS = self.DEBUG
+
         if not self.SECRET_KEY:
             if self.ENVIRONMENT == "production":
                 raise ValueError("SECRET_KEY must be set in production")

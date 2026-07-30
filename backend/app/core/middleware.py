@@ -24,15 +24,36 @@ _SECURITY_HEADERS = {
 }
 
 
+# FastAPI's bundled Swagger UI and ReDoc load their assets from jsDelivr, which the
+# strict API policy above blocks — the page returns 200 and renders blank. These two
+# paths get a policy wide enough to run them and nothing wider. Our own docs page at
+# {API_V1_PREFIX}/docs needs none of this; it is self-contained and sets its own.
+_VENDOR_DOCS_CSP = (
+    "default-src 'none'; "
+    "script-src 'unsafe-inline' https://cdn.jsdelivr.net; "
+    "style-src 'unsafe-inline' https://cdn.jsdelivr.net; "
+    "font-src https://cdn.jsdelivr.net; "
+    "img-src 'self' data: https://fastapi.tiangolo.com; "
+    "connect-src 'self'; "
+    "frame-ancestors 'none'"
+)
+
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app: ASGIApp, *, hsts: bool) -> None:
+    def __init__(self, app: ASGIApp, *, hsts: bool, vendor_doc_paths: frozenset[str]) -> None:
         super().__init__(app)
         self._hsts = hsts
+        self._vendor_doc_paths = vendor_doc_paths
 
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
+
         for header, value in _SECURITY_HEADERS.items():
+            if header == "Content-Security-Policy" and request.url.path in self._vendor_doc_paths:
+                response.headers.setdefault(header, _VENDOR_DOCS_CSP)
+                continue
             response.headers.setdefault(header, value)
+
         if self._hsts:
             response.headers.setdefault(
                 "Strict-Transport-Security",
@@ -105,9 +126,11 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
 def register_middleware(app: FastAPI, settings: Settings) -> None:
     # Registration order is reverse of execution order: the last added runs first.
     app.add_middleware(RequestContextMiddleware)
+    vendor_doc_paths = frozenset({"/docs", "/redoc"}) if settings.ENABLE_DOCS else frozenset()
     app.add_middleware(
         SecurityHeadersMiddleware,
         hsts=settings.ENVIRONMENT != "development",
+        vendor_doc_paths=vendor_doc_paths,
     )
     app.add_middleware(
         BodySizeLimitMiddleware,

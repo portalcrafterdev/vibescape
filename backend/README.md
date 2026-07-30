@@ -17,7 +17,30 @@ uv run alembic upgrade head
 uv run uvicorn app.main:app --reload
 ```
 
-API at `http://127.0.0.1:8000/api/v1`, interactive docs at `/docs` (disabled unless `DEBUG=true`).
+API at `http://127.0.0.1:8000/api/v1`.
+
+## API documentation
+
+| Route | What it is |
+|---|---|
+| `/api/v1/docs` | **Self-hosted reference.** Reads the live schema on each load, so new endpoints appear with no regeneration step. No external assets. |
+| `/docs` | FastAPI's Swagger UI, with interactive "Try it out". Loads from a CDN, so it needs internet access. |
+| `/redoc` | ReDoc. Also CDN-backed. |
+| `/openapi.json` | Raw OpenAPI 3.1 schema. |
+
+All four are gated on `ENABLE_DOCS`, which defaults to `DEBUG` but can be set
+independently — a shared staging box can serve docs without running in debug mode.
+
+To share the API without exposing a server:
+
+```bash
+uv run python scripts/export_openapi.py            # openapi.json — Postman, Insomnia, codegen
+uv run python scripts/export_openapi.py api.html   # standalone page, opens with no server
+uv run python scripts/export_openapi.py api.yaml   # YAML
+```
+
+The `.html` output inlines the schema into one self-contained file. It is a snapshot —
+regenerate after adding routes, or point people at `/api/v1/docs`, which never goes stale.
 
 ### Docker
 
