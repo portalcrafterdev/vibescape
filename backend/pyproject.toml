@@ -47,6 +47,8 @@ select = ["E", "F", "I", "B", "UP", "S"]
 # S101 assert, S105/S106 literal passwords, S110 try/except/pass in cleanup —
 # all expected in a test suite that exercises authentication.
 "tests/*" = ["S101", "S105", "S106", "S110"]
+# Alembic writes these; reformatting them adds churn to files nobody hand-edits.
+"alembic/versions/*" = ["E501"]
 
 [build-system]
 requires = ["hatchling"]

@@ -9,6 +9,7 @@ from app.cache.redis import get_redis
 from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.main import app
+from app.models.follow import Follow
 from app.models.token import PasswordResetToken, RefreshToken
 from app.models.user import User
 
@@ -38,6 +39,7 @@ async def clean_state() -> AsyncGenerator[None, None]:
     yield
 
     async with SessionLocal() as session:
+        await session.execute(delete(Follow))
         await session.execute(delete(PasswordResetToken))
         await session.execute(delete(RefreshToken))
         await session.execute(delete(User))
@@ -45,7 +47,11 @@ async def clean_state() -> AsyncGenerator[None, None]:
 
     try:
         redis = get_redis()
-        for pattern in ("vibescape:ratelimit:*", "vibescape:denylist:*"):
+        for pattern in (
+            "vibescape:ratelimit:*",
+            "vibescape:denylist:*",
+            "vibescape:profile:*",
+        ):
             keys = [key async for key in redis.scan_iter(match=pattern, count=500)]
             if keys:
                 await redis.delete(*keys)
@@ -83,3 +89,28 @@ async def registered(client: AsyncClient, credentials: dict[str, str]) -> dict:
 @pytest.fixture
 def auth_headers(registered: dict) -> dict[str, str]:
     return {"Authorization": f"Bearer {registered['access_token']}"}
+
+
+@pytest.fixture
+async def make_user(client: AsyncClient):
+    """Create additional accounts. Returns (payload, headers)."""
+
+    async def _make() -> tuple[dict, dict[str, str]]:
+        suffix = uuid.uuid4().hex[:10]
+        creds = {
+            "username": f"user_{suffix}",
+            "email": f"user_{suffix}@example.com",
+            "password": "correct horse battery staple",
+        }
+        resp = await client.post(f"{PREFIX}/auth/register", json=creds)
+        assert resp.status_code == 201, resp.text
+        body = resp.json()
+        return body, {"Authorization": f"Bearer {body['tokens']['access_token']}"}
+
+    return _make
+
+
+@pytest.fixture
+async def other_user(make_user) -> tuple[dict, dict[str, str]]:
+    """A second account, for follow and authorisation tests."""
+    return await make_user()

@@ -5,7 +5,8 @@ module here when it is created, or its table will be silently missing from migra
 """
 
 from app.db.base import Base
+from app.models.follow import Follow
 from app.models.token import PasswordResetToken, RefreshToken
 from app.models.user import User
 
-__all__ = ["Base", "PasswordResetToken", "RefreshToken", "User"]
+__all__ = ["Base", "Follow", "PasswordResetToken", "RefreshToken", "User"]

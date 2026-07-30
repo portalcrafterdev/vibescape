@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Integer, String, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -27,6 +27,24 @@ class User(Base):
     avatar_url: Mapped[str | None] = mapped_column(String(1000))
     banner_url: Mapped[str | None] = mapped_column(String(1000))
     gender: Mapped[str | None] = mapped_column(String(40))
+    pronouns: Mapped[str | None] = mapped_column(String(40))
+
+    # Free-form profile links. JSONB rather than a side table because they are only
+    # ever read and written as a whole list, never queried individually.
+    links: Mapped[list[dict]] = mapped_column(
+        JSONB, default=list, server_default="[]", nullable=False
+    )
+
+    # Denormalised so a profile render is one row rather than two COUNT(*) scans over
+    # a table that grows without bound. Kept correct by updating them in the same
+    # transaction as the follow edge, guarded by its unique constraint.
+    followers_count: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0", nullable=False
+    )
+    following_count: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0", nullable=False
+    )
+    posts_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
