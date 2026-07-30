@@ -9,4 +9,5 @@ export type RootStackParamList = {
   BannerScreen: undefined;
   GenderScreen: undefined;
   ThreadsScreen: undefined;
+  SettingsScreen: undefined;
 };

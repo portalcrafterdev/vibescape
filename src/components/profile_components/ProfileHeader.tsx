@@ -23,7 +23,7 @@ const ProfileHeader= ()=>{
             <AtSign color={"white"} size={22}/>
         </TouchableOpacity>
 
-        <TouchableOpacity style= {styles.iconButton}>
+        <TouchableOpacity style= {styles.iconButton} onPress={()=>navigation.push('SettingsScreen')}>
             <Menu color={"white"} size={22}/>
         </TouchableOpacity>
        </View>
