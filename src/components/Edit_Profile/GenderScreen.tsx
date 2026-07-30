@@ -1,4 +1,4 @@
-import { Check, Cross, Plus, X, Circle, CircleDot } from "lucide-react-native";
+import { Check, X, } from "lucide-react-native";
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
