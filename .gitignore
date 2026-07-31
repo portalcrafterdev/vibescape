@@ -19,3 +19,11 @@ venv/
 .mypy_cache/
 .coverage
 htmlcov/
+node_modules
+
+# Build artifacts — the real Android/iOS projects live in mobile/ and are
+# covered by mobile/.gitignore. These guard against stray copies at the root.
+.gradle/
+.cxx/
+.kotlin/
+build/

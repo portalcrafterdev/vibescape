@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -14,8 +15,15 @@ import {
 import { Eye, EyeOff } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-
+import { useSignUpMutation } from '../redux/api/authApi';
+import { getErrorMessage } from '../utils/apiError';
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
+
+// Mirrors the constraints the API enforces on RegisterRequest, so the user gets
+// told here instead of via a 422.
+const USERNAME_MIN = 3;
+const USERNAME_MAX = 30;
+const PASSWORD_MIN = 8;
 
 const RegisterScreen = ({ navigation }: Props) => {
   const [name, setName] = useState('');
@@ -26,29 +34,58 @@ const RegisterScreen = ({ navigation }: Props) => {
 
   const [hidePassword, setHidePassword] = useState(true);
   const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
+  const [signup, { isLoading }] = useSignUpMutation();
 
-  const register = () => {
+  const registerhandler = async () => {
+    if (isLoading) return;
+
     if (!name.trim()) {
       Alert.alert('Error', 'Please enter your full name.');
       return;
     }
 
-    if (!username.trim()) {
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername) {
       Alert.alert('Error', 'Please enter your username.');
       return;
     }
 
-    if (!email.trim()) {
+    if (
+      trimmedUsername.length < USERNAME_MIN ||
+      trimmedUsername.length > USERNAME_MAX
+    ) {
+      Alert.alert(
+        'Error',
+        `Username must be between ${USERNAME_MIN} and ${USERNAME_MAX} characters.`,
+      );
+      return;
+    }
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
       Alert.alert('Error', 'Please enter your email.');
       return;
     }
 
-    if (!password.trim()) {
+    if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+      Alert.alert('Error', 'Please enter a valid email address.');
+      return;
+    }
+
+    if (!password) {
       Alert.alert('Error', 'Please enter your password.');
       return;
     }
 
-    if (!confirmPassword.trim()) {
+    if (password.length < PASSWORD_MIN) {
+      Alert.alert(
+        'Error',
+        `Password must be at least ${PASSWORD_MIN} characters.`,
+      );
+      return;
+    }
+
+    if (!confirmPassword) {
       Alert.alert('Error', 'Please confirm your password.');
       return;
     }
@@ -58,7 +95,22 @@ const RegisterScreen = ({ navigation }: Props) => {
       return;
     }
 
-    Alert.alert('Success', 'Account Created Successfully');
+    try {
+      await signup({
+        username: trimmedUsername,
+        email: trimmedEmail,
+        password,
+      }).unwrap();
+
+      // /auth/register returns the same { user, tokens } payload as login,
+      // so the account is already signed in.
+      navigation.replace('Maintabs');
+    } catch (err) {
+      Alert.alert(
+        'Sign up failed',
+        getErrorMessage(err, 'Could not create your account. Please try again.'),
+      );
+    }
   };
 
   return (
@@ -84,6 +136,9 @@ const RegisterScreen = ({ navigation }: Props) => {
           style={styles.input}
           value={name}
           onChangeText={setName}
+          autoCapitalize="words"
+          returnKeyType="next"
+          editable={!isLoading}
         />
 
         <TextInput
@@ -93,6 +148,9 @@ const RegisterScreen = ({ navigation }: Props) => {
           value={username}
           onChangeText={setUsername}
           autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="next"
+          editable={!isLoading}
         />
 
         <TextInput
@@ -103,6 +161,10 @@ const RegisterScreen = ({ navigation }: Props) => {
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="emailAddress"
+          returnKeyType="next"
+          editable={!isLoading}
         />
 
         <View style={styles.passwordContainer}>
@@ -113,6 +175,11 @@ const RegisterScreen = ({ navigation }: Props) => {
             style={styles.passwordInput}
             value={password}
             onChangeText={setPassword}
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="newPassword"
+            returnKeyType="next"
+            editable={!isLoading}
           />
 
           <TouchableOpacity
@@ -134,6 +201,12 @@ const RegisterScreen = ({ navigation }: Props) => {
             style={styles.passwordInput}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="newPassword"
+            returnKeyType="done"
+            onSubmitEditing={registerhandler}
+            editable={!isLoading}
           />
 
           <TouchableOpacity
@@ -150,12 +223,18 @@ const RegisterScreen = ({ navigation }: Props) => {
         </View>
 
         <TouchableOpacity
-          style={styles.button}
-          onPress={register}
+          style={[styles.button, isLoading && styles.buttonDisabled]}
+          onPress={registerhandler}
+          disabled={isLoading}
+          activeOpacity={0.8}
         >
-          <Text style={styles.buttonText}>
-            Sign Up
-          </Text>
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>
+              Sign Up
+            </Text>
+          )}
         </TouchableOpacity>
 
         <View style={styles.bottomContainer}>
@@ -165,6 +244,7 @@ const RegisterScreen = ({ navigation }: Props) => {
 
           <TouchableOpacity
             onPress={() => navigation.goBack()}
+            disabled={isLoading}
           >
             <Text style={styles.login}>
               Log In
@@ -233,6 +313,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 15,
+  },
+
+  buttonDisabled: {
+    opacity: 0.6,
   },
 
   buttonText: {

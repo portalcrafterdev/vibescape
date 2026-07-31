@@ -9,13 +9,14 @@ import {
   Platform,
   Alert,
   ScrollView,
-  Image
+  Image,
+  ActivityIndicator
 } from 'react-native';
-
+import { useLoginMutation } from '../redux/api/authApi';
 import { Eye, EyeOff } from 'lucide-react-native';
-import HomeScreen from './HomeScreen';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
+import { getErrorMessage } from '../utils/apiError';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -23,8 +24,11 @@ const LoginScreen = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [hidePassword, setHidePassword] = useState(true);
+  const [login, { isLoading }] = useLoginMutation();
 
-  const login = () => {
+  const loginHandler = async () => {
+    if (isLoading) return;
+
     if (!email.trim()) {
       Alert.alert('Error', 'Enter Email');
       return;
@@ -35,7 +39,19 @@ const LoginScreen = ({ navigation }: Props) => {
       return;
     }
 
-    Alert.alert('Success', 'Login Button Pressed');
+    try {
+      await login({
+        identifier: email.trim(),
+        password,
+      }).unwrap();
+
+      navigation.replace('Maintabs');
+    } catch (err) {
+      Alert.alert(
+        'Login failed',
+        getErrorMessage(err, 'Please check your details and try again.'),
+      );
+    }
   };
 
   return (
@@ -63,6 +79,12 @@ const LoginScreen = ({ navigation }: Props) => {
         value={email}
         onChangeText={setEmail}
         style={styles.input}
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType="email-address"
+        textContentType="username"
+        returnKeyType="next"
+        editable={!isLoading}
       />
 
       <View style={styles.passwordContainer}>
@@ -73,6 +95,12 @@ const LoginScreen = ({ navigation }: Props) => {
           value={password}
           onChangeText={setPassword}
           style={styles.passwordInput}
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="password"
+          returnKeyType="done"
+          onSubmitEditing={loginHandler}
+          editable={!isLoading}
         />
 
         <TouchableOpacity
@@ -88,6 +116,7 @@ const LoginScreen = ({ navigation }: Props) => {
 
       <TouchableOpacity
         onPress={() => navigation.navigate('Forgot')}
+        disabled={isLoading}
       >
         <Text style={styles.forgot}>
           Forgot Password?
@@ -95,12 +124,18 @@ const LoginScreen = ({ navigation }: Props) => {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.loginButton}
-        onPress={()=> navigation.navigate('Maintabs')}
+        style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+        onPress={loginHandler}
+        disabled={isLoading}
+        activeOpacity={0.8}
       >
-        <Text style={styles.loginText}>
-          Log In
-        </Text>
+        {isLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.loginText}>
+            Log In
+          </Text>
+        )}
       </TouchableOpacity>
 
 <View style={{flexDirection: "row"}}>
@@ -108,6 +143,7 @@ const LoginScreen = ({ navigation }: Props) => {
     <Text style={styles.alread}>Don't have an account?</Text>
       <TouchableOpacity
         onPress={() => navigation.navigate('Register')}
+        disabled={isLoading}
       >
         <Text style={styles.signup}>
            Sign Up
@@ -174,6 +210,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
+  },
+
+  loginButtonDisabled: {
+    opacity: 0.6,
   },
 
   loginText: {

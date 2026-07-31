@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
 
   txt: {
     color:"#eae2e2cf",
-    fontSize: 17,
+    fontSize: 16,
     fontWeight:"500"
   },
   metatxt:{
