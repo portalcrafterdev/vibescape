@@ -13,6 +13,7 @@ from app.core.logging import get_logger
 from app.models.follow import Follow
 from app.models.user import User
 from app.schemas.user import UpdateProfileRequest
+from app.services import posts as posts_cache
 
 log = get_logger(__name__)
 
@@ -197,6 +198,9 @@ async def follow(db: AsyncSession, *, follower: User, target_id: uuid.UUID) -> t
 
     await invalidate_profile(target.id)
     await invalidate_profile(follower.id)
+    # Their posts belong in the follower's feed from this moment; without this the
+    # feed stays empty until the cache expires.
+    await posts_cache.invalidate_feed(follower.id)
 
     log.info("user_followed", follower=str(follower.id), target=str(target_id))
     return True, await _followers_count(db, target_id)
@@ -226,6 +230,8 @@ async def unfollow(db: AsyncSession, *, follower: User, target_id: uuid.UUID) ->
         await db.commit()
         await invalidate_profile(target.id)
         await invalidate_profile(follower.id)
+        # Symmetrically, their posts must leave the feed immediately.
+        await posts_cache.invalidate_feed(follower.id)
     else:
         await db.rollback()
 

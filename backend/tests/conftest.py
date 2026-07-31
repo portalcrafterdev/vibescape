@@ -10,6 +10,7 @@ from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.main import app
 from app.models.follow import Follow
+from app.models.post import Post, PostLike
 from app.models.token import PasswordResetToken, RefreshToken
 from app.models.user import User
 
@@ -39,6 +40,8 @@ async def clean_state() -> AsyncGenerator[None, None]:
     yield
 
     async with SessionLocal() as session:
+        await session.execute(delete(PostLike))
+        await session.execute(delete(Post))
         await session.execute(delete(Follow))
         await session.execute(delete(PasswordResetToken))
         await session.execute(delete(RefreshToken))
@@ -51,6 +54,7 @@ async def clean_state() -> AsyncGenerator[None, None]:
             "vibescape:ratelimit:*",
             "vibescape:denylist:*",
             "vibescape:profile:*",
+            "vibescape:feed:*",
         ):
             keys = [key async for key in redis.scan_iter(match=pattern, count=500)]
             if keys:
@@ -114,3 +118,15 @@ async def make_user(client: AsyncClient):
 async def other_user(make_user) -> tuple[dict, dict[str, str]]:
     """A second account, for follow and authorisation tests."""
     return await make_user()
+
+
+@pytest.fixture
+def expose_reset_token(monkeypatch):
+    """Turn on the development-only reset-token header for this test.
+
+    Without a mail provider it is the only way to obtain the raw token, but the
+    header is gated on ENVIRONMENT — which is a deployment setting, not something
+    the suite should depend on. Opting in explicitly keeps these tests passing
+    whatever the local .env says.
+    """
+    monkeypatch.setattr(get_settings(), "ENVIRONMENT", "development")

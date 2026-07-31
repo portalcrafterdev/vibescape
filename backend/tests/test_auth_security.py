@@ -168,7 +168,7 @@ class TestRateLimiting:
 
 
 class TestPasswordReset:
-    async def test_reset_flow_changes_the_password(self, client, registered):
+    async def test_reset_flow_changes_the_password(self, client, registered, expose_reset_token):
         email = registered["credentials"]["email"]
 
         forgot = await client.post(f"{PREFIX}/auth/forgot-password", json={"email": email})
@@ -200,7 +200,7 @@ class TestPasswordReset:
         )
         assert new.status_code == 200
 
-    async def test_reset_token_is_single_use(self, client, registered):
+    async def test_reset_token_is_single_use(self, client, registered, expose_reset_token):
         email = registered["credentials"]["email"]
         token = (
             await client.post(f"{PREFIX}/auth/forgot-password", json={"email": email})
@@ -217,7 +217,7 @@ class TestPasswordReset:
         )
         assert second.status_code == 401
 
-    async def test_reset_revokes_existing_sessions(self, client, registered):
+    async def test_reset_revokes_existing_sessions(self, client, registered, expose_reset_token):
         """Changing a password must end sessions an attacker may already hold."""
         email = registered["credentials"]["email"]
         token = (
@@ -233,6 +233,25 @@ class TestPasswordReset:
             f"{PREFIX}/auth/refresh", json={"refresh_token": registered["refresh_token"]}
         )
         assert resp.status_code == 401
+
+    async def test_reset_token_is_never_exposed_outside_development(
+        self, client, registered, monkeypatch
+    ):
+        """The debug header hands out a password-reset token to whoever asks.
+
+        On any reachable deployment that is account takeover for an arbitrary email,
+        so it must be gated on ENVIRONMENT and nothing else.
+        """
+        for environment in ("staging", "production"):
+            monkeypatch.setattr(settings, "ENVIRONMENT", environment)
+
+            resp = await client.post(
+                f"{PREFIX}/auth/forgot-password",
+                json={"email": registered["credentials"]["email"]},
+            )
+
+            assert resp.status_code == 200
+            assert "X-Debug-Reset-Token" not in resp.headers, f"reset token leaked in {environment}"
 
     async def test_unknown_reset_token_rejected(self, client):
         resp = await client.post(
