@@ -43,67 +43,66 @@ const LoginScreen = ({ navigation }: Props) => {
       return;
     }
 
-   setIsLoading(true);
-   try {
-    const response: any = await loginUser({
-      identifier: email.trim(),
-      password,
-    });
+  //  setIsLoading(true);
+  //  try {
+  //   const response: any = await loginUser({
+  //     identifier: email.trim(),
+  //     password,
+  //   });
 
-    // No body at all: null, undefined, "" or a 204 No Content
-    if (!response) {
-      Alert.alert('Login failed', 'The server returned an empty response. Please try again.');
-      return;
-    }
+  //   // No body at all: null, undefined, "" or a 204 No Content
+  //   if (!response) {
+  //     Alert.alert('Login failed', 'The server returned an empty response. Please try again.');
+  //     return;
+  //   }
 
-    // Body came back as plain text instead of JSON (HTML error page, proxy message)
-    if (typeof response === 'string') {
-      Alert.alert('Login failed', response.trim() || 'Unexpected response from the server.');
-      return;
-    }
+  //   // Body came back as plain text instead of JSON (HTML error page, proxy message)
+  //   if (typeof response === 'string') {
+  //     Alert.alert('Login failed', response.trim() || 'Unexpected response from the server.');
+  //     return;
+  //   }
 
-    // Body is an empty object {} or an empty array []
-    const isEmptyBody = Array.isArray(response)
-      ? response.length === 0
-      : Object.keys(response).length === 0;
+  //   // Body is an empty object {} or an empty array []
+  //   const isEmptyBody = Array.isArray(response)
+  //     ? response.length === 0
+  //     : Object.keys(response).length === 0;
 
-    if (isEmptyBody) {
-      Alert.alert('Login failed', 'The server returned no data. Please try again.');
-      return;
-    }
+  //   if (isEmptyBody) {
+  //     Alert.alert('Login failed', 'The server returned no data. Please try again.');
+  //     return;
+  //   }
 
-    // 200 OK but the payload itself reports a failure
-    if (response.success === false || response.error || response.detail) {
-      Alert.alert('Login failed', getErrorMessage({ data: response }, 'Invalid email or password.'));
-      return;
-    }
+  //   // 200 OK but the payload itself reports a failure
+  //   if (response.success === false || response.error || response.detail) {
+  //     Alert.alert('Login failed', getErrorMessage({ data: response }, 'Invalid email or password.'));
+  //     return;
+  //   }
 
-    // Payload exists but is missing what the app needs to stay signed in
-    const tokens = response.tokens ?? response;
-    if (!tokens?.access_token) {
-      Alert.alert('Login failed', 'The server response was incomplete. Please try again.');
-      return;
-    }
+  //   // Payload exists but is missing what the app needs to stay signed in
+  //   const tokens = response.tokens ?? response;
+  //   if (!tokens?.access_token) {
+  //     Alert.alert('Login failed', 'The server response was incomplete. Please try again.');
+  //     return;
+  //   }
 
-    // The axios interceptor signs every request from these keys.
-    await AsyncStorage.setItem('accessToken', tokens.access_token);
-    if (tokens.refresh_token) {
-      await AsyncStorage.setItem('refreshToken', tokens.refresh_token);
-    }
-
+  //   // The axios interceptor signs every request from these keys.
+  //   await AsyncStorage.setItem('accessToken', tokens.access_token);
+  //   if (tokens.refresh_token) {
+  //     await AsyncStorage.setItem('refreshToken', tokens.refresh_token);
+  //   }
+   
     navigation.replace('Maintabs');
 
-  } catch (error: any) {
-    console.log("Login Failed", error);
-    Alert.alert('Login failed', getErrorMessage(error?.response ?? error, 'Could not sign you in. Please try again.'));
+  // } catch (error: any) {
+  //   console.log("Login Failed", error);
+  //   Alert.alert('Login failed', getErrorMessage(error?.response ?? error, 'Could not sign you in. Please try again.'));
 
-  } finally {
-    setIsLoading(false);
-  }
+  // } finally {
+  //   setIsLoading(false);
+  // }
 };
   
-
-  return (
+ return (
     <KeyboardAvoidingView
       style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}  
