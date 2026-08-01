@@ -1601,6 +1601,717 @@
           }
         }
       }
+    },
+    "/api/v1/reels": {
+      "get": {
+        "tags": [
+          "reels"
+        ],
+        "summary": "List Reels",
+        "description": "The reels feed, newest first.\n\nNot restricted to accounts you follow \u2014 a reels tab limited to your graph would\nbe empty for a new account, which defeats its purpose.",
+        "operationId": "list_reels_api_v1_reels_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 30,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedReels"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "reels"
+        ],
+        "summary": "Create Reel",
+        "operationId": "create_reel_api_v1_reels_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReelRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReelOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reels/{reel_id}": {
+      "delete": {
+        "tags": [
+          "reels"
+        ],
+        "summary": "Delete Reel",
+        "description": "Delete your own reel. Someone else's returns 403.",
+        "operationId": "delete_reel_api_v1_reels__reel_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Reel Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reels/{reel_id}/like": {
+      "post": {
+        "tags": [
+          "reels"
+        ],
+        "summary": "Like Reel",
+        "operationId": "like_reel_api_v1_reels__reel_id__like_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Reel Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReelLikeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "reels"
+        ],
+        "summary": "Unlike Reel",
+        "operationId": "unlike_reel_api_v1_reels__reel_id__like_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Reel Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReelLikeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reels/{reel_id}/view": {
+      "post": {
+        "tags": [
+          "reels"
+        ],
+        "summary": "Record View",
+        "description": "Count a view.\n\nNot deduplicated per user \u2014 that needs a row per viewer per reel, a lot of\nwrites for a number displayed as \"820K\". Explore ranking tolerates the drift.",
+        "operationId": "record_view_api_v1_reels__reel_id__view_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Reel Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Record View Api V1 Reels  Reel Id  View Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stories": {
+      "get": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Story Tray",
+        "description": "The story tray: one entry per author with unexpired stories.\n\nGrouped by author because that is how the row is drawn \u2014 a flat list would push\nthe grouping onto every client. Your own entry comes first.",
+        "operationId": "story_tray_api_v1_stories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoryTray"
+                  },
+                  "type": "array",
+                  "title": "Response Story Tray Api V1 Stories Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Create Story",
+        "description": "Post a story. It stops being visible after 24 hours.",
+        "operationId": "create_story_api_v1_stories_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStoryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users/{user_id}/stories": {
+      "get": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "User Stories",
+        "description": "An author's unexpired stories, oldest first. Expired ones are never returned.",
+        "operationId": "user_stories_api_v1_users__user_id__stories_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StoryOut"
+                  },
+                  "title": "Response User Stories Api V1 Users  User Id  Stories Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stories/{story_id}": {
+      "delete": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Delete Story",
+        "operationId": "delete_story_api_v1_stories__story_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Story Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}/highlights": {
+      "get": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "List Highlights",
+        "operationId": "list_highlights_api_v1_users__user_id__highlights_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HighlightOut"
+                  },
+                  "title": "Response List Highlights Api V1 Users  User Id  Highlights Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/highlights": {
+      "post": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Create Highlight",
+        "description": "Save stories into a permanent highlight.\n\nImages are copied, not linked \u2014 a highlight exists to outlive the stories in\nit, so referencing rows that expire would leave it empty.",
+        "operationId": "create_highlight_api_v1_highlights_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHighlightRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HighlightOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/highlights/{highlight_id}/items": {
+      "get": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Highlight Items",
+        "operationId": "highlight_items_api_v1_highlights__highlight_id__items_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "highlight_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Highlight Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HighlightItemOut"
+                  },
+                  "title": "Response Highlight Items Api V1 Highlights  Highlight Id  Items Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/highlights/{highlight_id}": {
+      "delete": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Delete Highlight",
+        "operationId": "delete_highlight_api_v1_highlights__highlight_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "highlight_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Highlight Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/explore": {
+      "get": {
+        "tags": [
+          "explore"
+        ],
+        "summary": "Explore",
+        "description": "The discovery grid: popular reels and recent posts.\n\nCached under a single key with no viewer component. That is safe *because* the\nresponse carries no per-viewer state \u2014 the moment something like is_liked is\nadded here, this key becomes a cross-user leak and must be scoped like the feed.",
+        "operationId": "explore_api_v1_explore_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 60,
+              "minimum": 1,
+              "default": 30,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExploreResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1677,6 +2388,43 @@
         ],
         "title": "CreateCommentRequest"
       },
+      "CreateHighlightRequest": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "cover_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Url"
+          },
+          "story_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Story Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "CreateHighlightRequest"
+      },
       "CreatePostRequest": {
         "properties": {
           "image_url": {
@@ -1720,6 +2468,138 @@
         "type": "object",
         "title": "CreatePostRequest",
         "description": "Either an external image_url or a media_asset_id from a confirmed upload.\n\nmedia_asset_id is the real path: those bytes have been verified. image_url is\nkept for development and for referencing images already hosted elsewhere."
+      },
+      "CreateReelRequest": {
+        "properties": {
+          "video_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video Url"
+          },
+          "media_asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Asset Id"
+          },
+          "album_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Album Url"
+          },
+          "caption": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caption"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CreateReelRequest"
+      },
+      "CreateStoryRequest": {
+        "properties": {
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "media_asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Asset Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "CreateStoryRequest"
+      },
+      "ExploreItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "image_url": {
+            "type": "string",
+            "title": "Image Url"
+          },
+          "views": {
+            "type": "integer",
+            "title": "Views",
+            "default": 0
+          },
+          "is_video": {
+            "type": "boolean",
+            "title": "Is Video",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "image_url"
+        ],
+        "title": "ExploreItem",
+        "description": "Matches `SearchData.tsx` \u2014 id, image, views, isVideo.\n\nNote there is nothing viewer-specific here: no is_liked, no is_following. That\nis what makes the whole grid cacheable once for everyone rather than per user,\nunlike the feed."
+      },
+      "ExploreResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ExploreItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "ExploreResponse"
       },
       "FollowResponse": {
         "properties": {
@@ -1801,6 +2681,76 @@
           "cache"
         ],
         "title": "HealthResponse"
+      },
+      "HighlightItemOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "position": {
+            "type": "integer",
+            "title": "Position",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "HighlightItemOut"
+      },
+      "HighlightOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "cover_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Url"
+          },
+          "position": {
+            "type": "integer",
+            "title": "Position",
+            "default": 0
+          },
+          "item_count": {
+            "type": "integer",
+            "title": "Item Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title"
+        ],
+        "title": "HighlightOut"
       },
       "LikeResponse": {
         "properties": {
@@ -2146,6 +3096,38 @@
         ],
         "title": "PaginatedPosts"
       },
+      "PaginatedReels": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ReelOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "PaginatedReels"
+      },
       "PaginatedUsers": {
         "properties": {
           "items": {
@@ -2356,6 +3338,101 @@
         ],
         "title": "ProfileLink"
       },
+      "ReelLikeResponse": {
+        "properties": {
+          "liked": {
+            "type": "boolean",
+            "title": "Liked"
+          },
+          "likes_count": {
+            "type": "integer",
+            "title": "Likes Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "liked",
+          "likes_count"
+        ],
+        "title": "ReelLikeResponse"
+      },
+      "ReelOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "author": {
+            "$ref": "#/components/schemas/PostAuthor"
+          },
+          "video_url": {
+            "type": "string",
+            "title": "Video Url"
+          },
+          "album_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Album Url"
+          },
+          "caption": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caption"
+          },
+          "likes_count": {
+            "type": "integer",
+            "title": "Likes Count",
+            "default": 0
+          },
+          "comments_count": {
+            "type": "integer",
+            "title": "Comments Count",
+            "default": 0
+          },
+          "views_count": {
+            "type": "integer",
+            "title": "Views Count",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "is_liked": {
+            "type": "boolean",
+            "title": "Is Liked",
+            "default": false
+          },
+          "is_mine": {
+            "type": "boolean",
+            "title": "Is Mine",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "author",
+          "video_url",
+          "created_at"
+        ],
+        "title": "ReelOut",
+        "description": "Matches what `Reels.ts` renders, with counts as numbers.\n\nThe mock stored `likes: \"12.5K\"`. Abbreviation is a display concern \u2014 the API\nreturns the real number so the client can format it for its locale (PRD 7.9)."
+      },
       "RefreshRequest": {
         "properties": {
           "refresh_token": {
@@ -2420,6 +3497,86 @@
           "new_password"
         ],
         "title": "ResetPasswordRequest"
+      },
+      "StoryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "author": {
+            "$ref": "#/components/schemas/PostAuthor"
+          },
+          "image_url": {
+            "type": "string",
+            "title": "Image Url"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "is_mine": {
+            "type": "boolean",
+            "title": "Is Mine",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "author",
+          "image_url",
+          "created_at",
+          "expires_at"
+        ],
+        "title": "StoryOut"
+      },
+      "StoryTray": {
+        "properties": {
+          "author": {
+            "$ref": "#/components/schemas/PostAuthor"
+          },
+          "is_mine": {
+            "type": "boolean",
+            "title": "Is Mine",
+            "default": false
+          },
+          "story_count": {
+            "type": "integer",
+            "title": "Story Count",
+            "default": 0
+          },
+          "latest_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Latest At"
+          },
+          "preview_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "author",
+          "latest_at"
+        ],
+        "title": "StoryTray",
+        "description": "One row per author, which is how the tray is actually drawn.\n\nA flat list of stories would make the client group them; the mock shows one\ncircle per person, so the grouping belongs here."
       },
       "TokenPair": {
         "properties": {
