@@ -11,6 +11,7 @@ from app.db.session import SessionLocal
 from app.main import app
 from app.models.comment import Comment
 from app.models.follow import Follow
+from app.models.media import MediaAsset
 from app.models.post import Post, PostLike
 from app.models.token import PasswordResetToken, RefreshToken
 from app.models.user import User
@@ -44,6 +45,7 @@ async def clean_state() -> AsyncGenerator[None, None]:
         await session.execute(delete(Comment))
         await session.execute(delete(PostLike))
         await session.execute(delete(Post))
+        await session.execute(delete(MediaAsset))
         await session.execute(delete(Follow))
         await session.execute(delete(PasswordResetToken))
         await session.execute(delete(RefreshToken))

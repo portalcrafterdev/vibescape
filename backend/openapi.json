@@ -1456,6 +1456,151 @@
           }
         }
       }
+    },
+    "/api/v1/media/upload-url": {
+      "post": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Create Upload Url",
+        "description": "Get a URL to upload a file directly to storage.\n\nPOST the returned `fields` plus the file to `upload_url` as multipart form\ndata, then call `/media/{asset_id}/confirm`. The storage key is generated\nserver-side; a caller-supplied path would let one user overwrite another's\nobject.",
+        "operationId": "create_upload_url_api_v1_media_upload_url_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadUrlRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadUrlResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/media/{asset_id}/confirm": {
+      "post": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Confirm Upload",
+        "description": "Verify the uploaded bytes and make the asset usable.\n\nThe file's actual signature is inspected here. A declared content type proves\nnothing \u2014 anything can claim to be a JPEG.",
+        "operationId": "confirm_upload_api_v1_media__asset_id__confirm_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/media/{asset_id}": {
+      "get": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Get Media",
+        "description": "A fresh signed URL for an asset. Call again once the previous one expires.",
+        "operationId": "get_media_api_v1_media__asset_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1535,10 +1680,28 @@
       "CreatePostRequest": {
         "properties": {
           "image_url": {
-            "type": "string",
-            "maxLength": 1000,
-            "minLength": 1,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Image Url"
+          },
+          "media_asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Asset Id"
           },
           "caption": {
             "anyOf": [
@@ -1555,10 +1718,8 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "image_url"
-        ],
-        "title": "CreatePostRequest"
+        "title": "CreatePostRequest",
+        "description": "Either an external image_url or a media_asset_id from a confirmed upload.\n\nmedia_asset_id is the real path: those bytes have been verified. image_url is\nkept for development and for referencing images already hosted elsewhere."
       },
       "FollowResponse": {
         "properties": {
@@ -1699,6 +1860,52 @@
         },
         "type": "object",
         "title": "LogoutRequest"
+      },
+      "MediaOut": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Asset Id"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "content_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Type"
+          },
+          "size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size Bytes"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "url",
+          "expires_in"
+        ],
+        "title": "MediaOut"
       },
       "MessageResponse": {
         "properties": {
@@ -2021,7 +2228,14 @@
             "title": "Id"
           },
           "image_url": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Image Url"
           },
           "pinned": {
@@ -2042,8 +2256,7 @@
         },
         "type": "object",
         "required": [
-          "id",
-          "image_url"
+          "id"
         ],
         "title": "PostGridItem",
         "description": "Profile-grid projection \u2014 matches `ProfilePosts.ts` (id, image, pinned)."
@@ -2059,7 +2272,14 @@
             "$ref": "#/components/schemas/PostAuthor"
           },
           "image_url": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Image Url"
           },
           "caption": {
@@ -2108,7 +2328,6 @@
         "required": [
           "id",
           "author",
-          "image_url",
           "created_at"
         ],
         "title": "PostOut",
@@ -2368,6 +2587,57 @@
         "type": "object",
         "title": "UpdateProfileRequest",
         "description": "Every field optional \u2014 a PATCH updates only what it sends.\n\nNone and \"absent\" mean different things here: absent leaves a field alone,\nwhile an explicit null clears it. model_fields_set distinguishes them."
+      },
+      "UploadUrlRequest": {
+        "properties": {
+          "content_type": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Content Type"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "content_type"
+        ],
+        "title": "UploadUrlRequest"
+      },
+      "UploadUrlResponse": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Asset Id"
+          },
+          "upload_url": {
+            "type": "string",
+            "title": "Upload Url"
+          },
+          "fields": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Fields"
+          },
+          "max_bytes": {
+            "type": "integer",
+            "title": "Max Bytes"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "upload_url",
+          "fields",
+          "max_bytes",
+          "expires_in"
+        ],
+        "title": "UploadUrlResponse"
       },
       "UserPrivate": {
         "properties": {

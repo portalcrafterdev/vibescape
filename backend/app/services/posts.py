@@ -165,9 +165,19 @@ def _slice(rows, limit: int):
 
 
 async def create_post(
-    db: AsyncSession, *, author: User, image_url: str, caption: str | None
+    db: AsyncSession,
+    *,
+    author: User,
+    image_url: str | None,
+    caption: str | None,
+    media_asset_id=None,
 ) -> Post:
-    post = Post(author_id=author.id, image_url=image_url, caption=caption)
+    post = Post(
+        author_id=author.id,
+        image_url=image_url,
+        media_asset_id=media_asset_id,
+        caption=caption,
+    )
     db.add(post)
 
     await db.execute(
@@ -262,6 +272,32 @@ async def unlike(db: AsyncSession, *, user: User, post_id: uuid.UUID) -> tuple[b
         await db.rollback()
 
     return False, await _likes_count(db, post_id)
+
+
+async def resolve_image_urls(db: AsyncSession, posts: list[Post]) -> dict[uuid.UUID, str]:
+    """Signed URLs for any posts backed by an uploaded asset.
+
+    Resolved at read time, never stored: a signed URL expires, so persisting one
+    would leave posts pointing at dead links. Signing is a local HMAC, so this adds
+    no network round trip per post — but the asset rows are fetched in one query
+    rather than one per post.
+    """
+    from app.models.media import MediaAsset
+    from app.services.media import signed_url
+
+    asset_ids = [p.media_asset_id for p in posts if p.media_asset_id]
+    if not asset_ids:
+        return {}
+
+    rows = await db.scalars(select(MediaAsset).where(MediaAsset.id.in_(asset_ids)))
+    by_id = {a.id: a for a in rows.all()}
+
+    resolved: dict[uuid.UUID, str] = {}
+    for post in posts:
+        asset = by_id.get(post.media_asset_id) if post.media_asset_id else None
+        if asset is not None:
+            resolved[post.id] = await signed_url(asset)
+    return resolved
 
 
 async def _likes_count(db: AsyncSession, post_id: uuid.UUID) -> int:

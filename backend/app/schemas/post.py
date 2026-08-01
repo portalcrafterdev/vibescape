@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class PostAuthor(BaseModel):
@@ -31,7 +31,7 @@ class PostOut(BaseModel):
 
     id: uuid.UUID
     author: PostAuthor
-    image_url: str
+    image_url: str | None = None
     caption: str | None = None
     likes_count: int = 0
     comments_count: int = 0
@@ -49,21 +49,36 @@ class PostGridItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    image_url: str
+    image_url: str | None = None
     pinned: bool = False
     likes_count: int = 0
     comments_count: int = 0
 
 
 class CreatePostRequest(BaseModel):
+    """Either an external image_url or a media_asset_id from a confirmed upload.
+
+    media_asset_id is the real path: those bytes have been verified. image_url is
+    kept for development and for referencing images already hosted elsewhere.
+    """
+
     model_config = ConfigDict(extra="forbid")
 
-    image_url: str = Field(min_length=1, max_length=1000)
+    image_url: str | None = Field(default=None, max_length=1000)
+    media_asset_id: uuid.UUID | None = None
     caption: str | None = Field(default=None, max_length=2200)
+
+    @model_validator(mode="after")
+    def _need_one_source(self) -> "CreatePostRequest":
+        if not self.image_url and not self.media_asset_id:
+            raise ValueError("provide either image_url or media_asset_id")
+        return self
 
     @field_validator("image_url")
     @classmethod
-    def _http_only(cls, v: str) -> str:
+    def _http_only(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
         # Rendered as an image source in other people's feeds; anything but http(s)
         # is a way to point a URL loader somewhere it should not go.
         if not v.startswith(("http://", "https://")):

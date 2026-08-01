@@ -53,6 +53,29 @@ class Settings(BaseSettings):
     RATE_LIMIT_DEFAULT_WINDOW_SECONDS: int = 60
     RATE_LIMIT_ENABLED: bool = True
 
+    # --- media storage -------------------------------------------------------
+    # S3-compatible: works against AWS S3, Cloudflare R2, DigitalOcean Spaces and
+    # MinIO. Leave S3_BUCKET empty in development to use the local-disk fallback.
+    S3_BUCKET: str = ""
+    S3_ENDPOINT_URL: str = ""
+    S3_REGION: str = "auto"
+    S3_ACCESS_KEY_ID: str = ""
+    S3_SECRET_ACCESS_KEY: str = ""
+
+    LOCAL_STORAGE_DIR: str = "./.media"
+    LOCAL_STORAGE_PUBLIC_BASE: str = "http://127.0.0.1:8000/api/v1/media/local"
+
+    # Uploads are direct-to-storage, so this bound is carried in the presigned
+    # policy and enforced by the provider, not by us.
+    MAX_IMAGE_BYTES: int = 10 * 1024 * 1024
+    MAX_VIDEO_BYTES: int = 100 * 1024 * 1024
+
+    UPLOAD_URL_EXPIRE_SECONDS: int = 300
+    MEDIA_URL_EXPIRE_SECONDS: int = 3600
+
+    RATE_LIMIT_UPLOADS_PER_USER: int = 30
+    RATE_LIMIT_UPLOAD_WINDOW_SECONDS: int = 3600
+
     @field_validator("ENABLE_DOCS", mode="before")
     @classmethod
     def _blank_means_unset(cls, v: object) -> object:
@@ -96,6 +119,10 @@ class Settings(BaseSettings):
                 raise ValueError("DEBUG must be false in production")
             if "*" in self.CORS_ORIGINS:
                 raise ValueError("CORS_ORIGINS must not be '*' in production")
+            if not self.S3_BUCKET:
+                # The local-disk fallback loses files on redeploy and cannot be
+                # shared across machines. Refuse rather than silently degrade.
+                raise ValueError("S3_BUCKET must be configured in production")
         return self
 
 

@@ -32,7 +32,12 @@ class Post(Base):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
-    image_url: Mapped[str] = mapped_column(String(1000), nullable=False)
+    # Either a caller-supplied external URL, or a reference to a verified upload.
+    # A signed URL is never stored: it expires, so it is generated at read time.
+    image_url: Mapped[str | None] = mapped_column(String(1000))
+    media_asset_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("media_assets.id", ondelete="SET NULL")
+    )
     caption: Mapped[str | None] = mapped_column(String(2200))
 
     # Denormalised for the same reason as the follow counters: rendering a feed page

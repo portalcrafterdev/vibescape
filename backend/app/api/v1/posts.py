@@ -17,6 +17,7 @@ from app.schemas.post import (
     PostOut,
     UpdatePostRequest,
 )
+from app.services import media as media_service
 from app.services import posts as service
 from app.services import users as user_service
 
@@ -24,11 +25,13 @@ log = get_logger(__name__)
 router = APIRouter(tags=["posts"])
 
 
-def _to_out(post: Post, author: User, *, viewer_id: uuid.UUID, liked: bool) -> PostOut:
+def _to_out(
+    post: Post, author: User, *, viewer_id: uuid.UUID, liked: bool, image_url: str | None = None
+) -> PostOut:
     return PostOut(
         id=post.id,
         author=PostAuthor.model_validate(author),
-        image_url=post.image_url,
+        image_url=image_url or post.image_url or "",
         caption=post.caption,
         likes_count=post.likes_count,
         comments_count=post.comments_count,
@@ -61,9 +64,16 @@ async def read_feed(
             db, viewer_id=current_user.id, cursor=cursor, limit=limit
         )
         liked = await service.liked_set(db, current_user.id, [p.id for p, _ in rows])
+        signed = await service.resolve_image_urls(db, [p for p, _ in rows])
         page = PaginatedPosts(
             items=[
-                _to_out(post, author, viewer_id=current_user.id, liked=post.id in liked)
+                _to_out(
+                    post,
+                    author,
+                    viewer_id=current_user.id,
+                    liked=post.id in liked,
+                    image_url=signed.get(post.id),
+                )
                 for post, author in rows
             ],
             next_cursor=next_cursor,
@@ -87,10 +97,23 @@ async def create_post(
     db: DbSession,
     current_user: CurrentUser,
 ) -> PostOut:
+    asset = None
+    if payload.media_asset_id:
+        # Only a confirmed asset may be attached: an unverified key would let a
+        # caller reference bytes nobody checked.
+        asset = await media_service.get_ready_asset(
+            db, owner=current_user, asset_id=payload.media_asset_id
+        )
+
     post = await service.create_post(
-        db, author=current_user, image_url=payload.image_url, caption=payload.caption
+        db,
+        author=current_user,
+        image_url=payload.image_url,
+        caption=payload.caption,
+        media_asset_id=asset.id if asset else None,
     )
-    return _to_out(post, current_user, viewer_id=current_user.id, liked=False)
+    signed = await media_service.signed_url(asset) if asset else None
+    return _to_out(post, current_user, viewer_id=current_user.id, liked=False, image_url=signed)
 
 
 @router.get("/posts/{post_id}", response_model=PostOut)
@@ -102,7 +125,14 @@ async def read_post(
     post = await service.get_post(db, post_id)
     author = await user_service.get_by_id(db, post.author_id)
     liked = await service.liked_set(db, current_user.id, [post.id])
-    return _to_out(post, author, viewer_id=current_user.id, liked=post.id in liked)
+    signed = await service.resolve_image_urls(db, [post])
+    return _to_out(
+        post,
+        author,
+        viewer_id=current_user.id,
+        liked=post.id in liked,
+        image_url=signed.get(post.id),
+    )
 
 
 @router.patch("/posts/{post_id}", response_model=PostOut)
