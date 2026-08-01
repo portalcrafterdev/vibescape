@@ -21,6 +21,20 @@ from app.models.user import User
 
 PREFIX = get_settings().API_V1_PREFIX
 
+# Pin media storage to the local backend for the whole suite.
+#
+# Otherwise which tests pass depends on whatever .env happens to select: point the
+# app at Cloudinary and every upload test starts failing, because it was exercising
+# the flow through the local stand-in. A test suite whose result changes with
+# deployment configuration is not telling you anything about the code. The
+# provider-specific behaviour is covered separately in test_storage_cloudinary.py,
+# which constructs its backend directly.
+get_settings().MEDIA_BACKEND = "local"
+
+from app.storage import get_storage  # noqa: E402
+
+get_storage.cache_clear()
+
 
 @pytest.fixture
 def settings():
@@ -31,6 +45,19 @@ def settings():
 async def client() -> AsyncGenerator[AsyncClient, None]:
     """HTTP client bound to the ASGI app, no network involved."""
     transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+
+@pytest.fixture
+async def client_passthrough() -> AsyncGenerator[AsyncClient, None]:
+    """Client that returns the 500 response instead of re-raising.
+
+    By default httpx re-raises an unhandled exception, which is useful for
+    debugging but makes it impossible to assert on what the client would actually
+    have received. Auditing the error envelope requires seeing the real response.
+    """
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
