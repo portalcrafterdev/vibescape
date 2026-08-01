@@ -15,12 +15,9 @@ import {
 import { Eye, EyeOff } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
-import { useSignUpMutation } from '../redux/api/authApi';
+import { registerUser } from '../../api/authApi';
 import { getErrorMessage } from '../utils/apiError';
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
-
-// Mirrors the constraints the API enforces on RegisterRequest, so the user gets
-// told here instead of via a 422.
 const USERNAME_MIN = 3;
 const USERNAME_MAX = 30;
 const PASSWORD_MIN = 8;
@@ -34,7 +31,7 @@ const RegisterScreen = ({ navigation }: Props) => {
 
   const [hidePassword, setHidePassword] = useState(true);
   const [hideConfirmPassword, setHideConfirmPassword] = useState(true);
-  const [signup, { isLoading }] = useSignUpMutation();
+  const [isLoading, setIsLoading] = useState(false);
 
   const registerhandler = async () => {
     if (isLoading) return;
@@ -95,21 +92,68 @@ const RegisterScreen = ({ navigation }: Props) => {
       return;
     }
 
+    setIsLoading(true);
     try {
-      await signup({
+      const response = await registerUser({
         username: trimmedUsername,
         email: trimmedEmail,
         password,
-      }).unwrap();
+      });
 
-      // /auth/register returns the same { user, tokens } payload as login,
-      // so the account is already signed in.
+      // No body at all: null, undefined, "" or a 204 No Content
+      if (!response) {
+        Alert.alert(
+          'Sign up failed',
+          'The server returned an empty response. Please try again.',
+        );
+        return;
+      }
+
+      // Body came back as plain text instead of JSON (HTML error page, proxy message)
+      if (typeof response === 'string') {
+        Alert.alert(
+          'Sign up failed',
+          response.trim() || 'Unexpected response from the server.',
+        );
+        return;
+      }
+
+      // Body is an empty object {} or an empty array []
+      const isEmptyBody = Array.isArray(response)
+        ? response.length === 0
+        : Object.keys(response).length === 0;
+
+      if (isEmptyBody) {
+        Alert.alert(
+          'Sign up failed',
+          'The server returned no data. Please try again.',
+        );
+        return;
+      }
+
+      // 200 OK but the payload itself reports a failure
+      if (response.success === false || response.error || response.detail) {
+        Alert.alert(
+          'Sign up failed',
+          getErrorMessage(
+            { data: response },
+            'Could not create your account. Please try again.',
+          ),
+        );
+        return;
+      }
+
       navigation.replace('Maintabs');
-    } catch (err) {
+    } catch (err: any) {
       Alert.alert(
         'Sign up failed',
-        getErrorMessage(err, 'Could not create your account. Please try again.'),
+        getErrorMessage(
+          err?.response ?? err,
+          'Could not create your account. Please try again.',
+        ),
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -138,7 +182,6 @@ const RegisterScreen = ({ navigation }: Props) => {
           onChangeText={setName}
           autoCapitalize="words"
           returnKeyType="next"
-          editable={!isLoading}
         />
 
         <TextInput
@@ -150,7 +193,6 @@ const RegisterScreen = ({ navigation }: Props) => {
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="next"
-          editable={!isLoading}
         />
 
         <TextInput
@@ -164,7 +206,6 @@ const RegisterScreen = ({ navigation }: Props) => {
           autoCorrect={false}
           textContentType="emailAddress"
           returnKeyType="next"
-          editable={!isLoading}
         />
 
         <View style={styles.passwordContainer}>
@@ -179,7 +220,6 @@ const RegisterScreen = ({ navigation }: Props) => {
             autoCorrect={false}
             textContentType="newPassword"
             returnKeyType="next"
-            editable={!isLoading}
           />
 
           <TouchableOpacity
@@ -206,7 +246,6 @@ const RegisterScreen = ({ navigation }: Props) => {
             textContentType="newPassword"
             returnKeyType="done"
             onSubmitEditing={registerhandler}
-            editable={!isLoading}
           />
 
           <TouchableOpacity
@@ -244,7 +283,6 @@ const RegisterScreen = ({ navigation }: Props) => {
 
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            disabled={isLoading}
           >
             <Text style={styles.login}>
               Log In

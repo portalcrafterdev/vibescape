@@ -8,7 +8,7 @@ import {
 } from "react-native";
 
 import { ArrowRight } from "lucide-react-native";
-import { settingsData } from "./SettingsData";
+import { settingsData } from "../../data/SettingsData";
 
 const SettingsFlat1 = () => {
   const renderItem = ({ item }: any) => {

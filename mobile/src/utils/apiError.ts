@@ -10,6 +10,11 @@ export const getErrorMessage = (
     return 'This service is unavailable right now. Please try again later.';
   }
 
+  // The API reports failures as {"error": {"code", "message"}}, sometimes with a 200 status.
+  const enveloped = err?.data?.error;
+  if (typeof enveloped === 'string') return enveloped;
+  if (typeof enveloped?.message === 'string') return enveloped.message;
+
   const detail = err?.data?.detail;
   if (typeof detail === 'string') return detail;
 

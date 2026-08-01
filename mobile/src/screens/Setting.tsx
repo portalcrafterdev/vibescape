@@ -9,6 +9,7 @@ import SettingContainer from "../components/settings_components/SettingsContaine
 import Settinghow from "../components/settings_components/Settingshow";
 import SettingsFlat1 from "../components/settings_components/SettingsFlat1";
 import SettingContainer2 from "../components/settings_components/SettingsContainer2";
+import SettingSeeContent from "../components/settings_components/SettingsSeeContent";
 
 const SettingsScreen = ()=>{
   return (
@@ -22,6 +23,7 @@ const SettingsScreen = ()=>{
         <Settinghow/>
         <SettingsFlat1/>
         <SettingContainer2/>
+        <SettingSeeContent/>
       </View>
     </SafeAreaView>
   );

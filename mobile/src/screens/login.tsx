@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import {
   View,
   Text,
@@ -12,10 +13,11 @@ import {
   Image,
   ActivityIndicator
 } from 'react-native';
-import { useLoginMutation } from '../redux/api/authApi';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Eye, EyeOff } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
+import { loginUser } from '../../api/authApi';
 import { getErrorMessage } from '../utils/apiError';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -24,9 +26,11 @@ const LoginScreen = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [hidePassword, setHidePassword] = useState(true);
-  const [login, { isLoading }] = useLoginMutation();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const loginHandler = async () => {
+
+  const handleLogin = async () => {
+   
     if (isLoading) return;
 
     if (!email.trim()) {
@@ -39,20 +43,65 @@ const LoginScreen = ({ navigation }: Props) => {
       return;
     }
 
-    try {
-      await login({
-        identifier: email.trim(),
-        password,
-      }).unwrap();
+   setIsLoading(true);
+   try {
+    const response: any = await loginUser({
+      identifier: email.trim(),
+      password,
+    });
 
-      navigation.replace('Maintabs');
-    } catch (err) {
-      Alert.alert(
-        'Login failed',
-        getErrorMessage(err, 'Please check your details and try again.'),
-      );
+    // No body at all: null, undefined, "" or a 204 No Content
+    if (!response) {
+      Alert.alert('Login failed', 'The server returned an empty response. Please try again.');
+      return;
     }
-  };
+
+    // Body came back as plain text instead of JSON (HTML error page, proxy message)
+    if (typeof response === 'string') {
+      Alert.alert('Login failed', response.trim() || 'Unexpected response from the server.');
+      return;
+    }
+
+    // Body is an empty object {} or an empty array []
+    const isEmptyBody = Array.isArray(response)
+      ? response.length === 0
+      : Object.keys(response).length === 0;
+
+    if (isEmptyBody) {
+      Alert.alert('Login failed', 'The server returned no data. Please try again.');
+      return;
+    }
+
+    // 200 OK but the payload itself reports a failure
+    if (response.success === false || response.error || response.detail) {
+      Alert.alert('Login failed', getErrorMessage({ data: response }, 'Invalid email or password.'));
+      return;
+    }
+
+    // Payload exists but is missing what the app needs to stay signed in
+    const tokens = response.tokens ?? response;
+    if (!tokens?.access_token) {
+      Alert.alert('Login failed', 'The server response was incomplete. Please try again.');
+      return;
+    }
+
+    // The axios interceptor signs every request from these keys.
+    await AsyncStorage.setItem('accessToken', tokens.access_token);
+    if (tokens.refresh_token) {
+      await AsyncStorage.setItem('refreshToken', tokens.refresh_token);
+    }
+
+    navigation.replace('Maintabs');
+
+  } catch (error: any) {
+    console.log("Login Failed", error);
+    Alert.alert('Login failed', getErrorMessage(error?.response ?? error, 'Could not sign you in. Please try again.'));
+
+  } finally {
+    setIsLoading(false);
+  }
+};
+  
 
   return (
     <KeyboardAvoidingView
@@ -99,7 +148,7 @@ const LoginScreen = ({ navigation }: Props) => {
           autoCorrect={false}
           textContentType="password"
           returnKeyType="done"
-          onSubmitEditing={loginHandler}
+          onSubmitEditing={handleLogin}
           editable={!isLoading}
         />
 
@@ -125,7 +174,7 @@ const LoginScreen = ({ navigation }: Props) => {
 
       <TouchableOpacity
         style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-        onPress={loginHandler}
+        onPress={handleLogin}
         disabled={isLoading}
         activeOpacity={0.8}
       >
