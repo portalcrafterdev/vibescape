@@ -9,6 +9,7 @@ from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import register_middleware
 from app.db.session import engine
+from app.services.realtime import manager as realtime_manager
 
 
 @asynccontextmanager
@@ -17,6 +18,8 @@ async def lifespan(app: FastAPI):
     log = get_logger(__name__)
     log.info("startup", environment=settings.ENVIRONMENT)
     yield
+    # Stop the pub/sub reader before the Redis client it depends on.
+    await realtime_manager.shutdown()
     await close_redis()
     await engine.dispose()
     log.info("shutdown")

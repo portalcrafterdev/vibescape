@@ -7,10 +7,12 @@ from app.api.v1 import (
     explore,
     health,
     media,
+    messages,
     posts,
     reels,
     stories,
     users,
+    ws,
 )
 from app.core.config import get_settings
 
@@ -24,6 +26,8 @@ api_router.include_router(media.router)
 api_router.include_router(reels.router)
 api_router.include_router(stories.router)
 api_router.include_router(explore.router)
+api_router.include_router(messages.router)
+api_router.include_router(ws.router)
 
 if get_settings().ENABLE_DOCS:
     api_router.include_router(docs.router)

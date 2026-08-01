@@ -8,6 +8,7 @@ from app.db.base import Base
 from app.models.comment import Comment
 from app.models.follow import Follow
 from app.models.media import MediaAsset
+from app.models.message import Conversation, ConversationParticipant, Message
 from app.models.post import Post, PostLike
 from app.models.reel import Reel, ReelLike
 from app.models.story import Highlight, HighlightItem, Story
@@ -17,6 +18,9 @@ from app.models.user import User
 __all__ = [
     "Base",
     "Comment",
+    "Conversation",
+    "ConversationParticipant",
+    "Message",
     "Highlight",
     "HighlightItem",
     "Follow",

@@ -19,6 +19,7 @@ dependencies = [
     "aioboto3>=13.2",
     "python-multipart>=0.0.20",
     "httpx>=0.28",
+    "websockets>=13",
 ]
 
 [project.optional-dependencies]

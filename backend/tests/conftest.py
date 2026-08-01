@@ -12,6 +12,7 @@ from app.main import app
 from app.models.comment import Comment
 from app.models.follow import Follow
 from app.models.media import MediaAsset
+from app.models.message import Conversation, ConversationParticipant, Message
 from app.models.post import Post, PostLike
 from app.models.reel import Reel, ReelLike
 from app.models.story import Highlight, HighlightItem, Story
@@ -44,6 +45,9 @@ async def clean_state() -> AsyncGenerator[None, None]:
     yield
 
     async with SessionLocal() as session:
+        await session.execute(delete(Message))
+        await session.execute(delete(ConversationParticipant))
+        await session.execute(delete(Conversation))
         await session.execute(delete(HighlightItem))
         await session.execute(delete(Highlight))
         await session.execute(delete(Story))
@@ -67,6 +71,7 @@ async def clean_state() -> AsyncGenerator[None, None]:
             "vibescape:profile:*",
             "vibescape:feed:*",
             "vibescape:explore:*",
+            "vibescape:presence:*",
         ):
             keys = [key async for key in redis.scan_iter(match=pattern, count=500)]
             if keys:
