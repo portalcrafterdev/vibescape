@@ -54,6 +54,14 @@ class Settings(BaseSettings):
     RATE_LIMIT_ENABLED: bool = True
 
     # --- media storage -------------------------------------------------------
+    # Backend is chosen by which credentials are present: Cloudinary, then
+    # S3-compatible, then a local-disk fallback for development.
+    MEDIA_BACKEND: Literal["auto", "cloudinary", "s3", "local"] = "auto"
+
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
+
     # S3-compatible: works against AWS S3, Cloudflare R2, DigitalOcean Spaces and
     # MinIO. Leave S3_BUCKET empty in development to use the local-disk fallback.
     S3_BUCKET: str = ""
@@ -119,10 +127,19 @@ class Settings(BaseSettings):
                 raise ValueError("DEBUG must be false in production")
             if "*" in self.CORS_ORIGINS:
                 raise ValueError("CORS_ORIGINS must not be '*' in production")
-            if not self.S3_BUCKET:
+            if not (self.CLOUDINARY_CLOUD_NAME or self.S3_BUCKET):
                 # The local-disk fallback loses files on redeploy and cannot be
                 # shared across machines. Refuse rather than silently degrade.
-                raise ValueError("S3_BUCKET must be configured in production")
+                raise ValueError("Configure CLOUDINARY_CLOUD_NAME or S3_BUCKET in production")
+
+        # A key and secret with no cloud name cannot build a single valid URL, so
+        # fail at startup rather than on the first upload.
+        if (self.CLOUDINARY_API_KEY or self.CLOUDINARY_API_SECRET) and not (
+            self.CLOUDINARY_CLOUD_NAME
+        ):
+            raise ValueError(
+                "CLOUDINARY_CLOUD_NAME is required when Cloudinary credentials are set"
+            )
         return self
 
 
