@@ -9,6 +9,7 @@ from app.cache.redis import get_redis
 from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.main import app
+from app.models.comment import Comment
 from app.models.follow import Follow
 from app.models.post import Post, PostLike
 from app.models.token import PasswordResetToken, RefreshToken
@@ -40,6 +41,7 @@ async def clean_state() -> AsyncGenerator[None, None]:
     yield
 
     async with SessionLocal() as session:
+        await session.execute(delete(Comment))
         await session.execute(delete(PostLike))
         await session.execute(delete(Post))
         await session.execute(delete(Follow))
