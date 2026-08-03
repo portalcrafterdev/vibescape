@@ -13,6 +13,17 @@ export const getErrorMessage = (
   // The API reports failures as {"error": {"code", "message"}}, sometimes with a 200 status.
   const enveloped = err?.data?.error;
   if (typeof enveloped === 'string') return enveloped;
+
+  // Validation failures put the useful part in details[]; the top-level message is just
+  // "Invalid request", which does not tell the user which field to fix.
+  const details = enveloped?.details;
+  if (Array.isArray(details) && details.length) {
+    const parts = details
+      .map((d: any) => (d?.field ? `${d.field}: ${d.reason}` : d?.reason))
+      .filter(Boolean);
+    if (parts.length) return parts.join('\n');
+  }
+
   if (typeof enveloped?.message === 'string') return enveloped.message;
 
   const detail = err?.data?.detail;

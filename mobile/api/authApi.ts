@@ -21,6 +21,14 @@ export interface AuthUser {
   avatar_url?: string | null;
   banner_url?: string | null;
   gender?: string | null;
+  links?: object | null;
+  followers_count?: number,
+  following_count?: number,
+  post_count? : number,
+  is_following?: boolean,
+  is_self?: boolean,
+  pronouns: string| null;
+
 }
 
 export interface AuthResponse {
@@ -36,6 +44,10 @@ export interface SignUpRequest {
 
 export interface forgotrequest{
   email : string;
+}
+
+export interface LogoutRequest{
+  refresh_token : string;
 }
 
 export const loginUser = async (
@@ -79,5 +91,23 @@ export const forgotpassword = async(
     throw new Error("The server returned an empty response");
   }
 
+  return response.data;
+};
+
+export const logoutUser = async(
+  data: LogoutRequest
+)=>{
+  const response = await api.post("/auth/logout", data);
+  if(response.status === 204 || !response.data){
+    throw new Error("The server returned an empty response");
+  }
+  return response.data;
+};
+
+export const getme = async()=>{
+  const response = await api.get("/users/me");
+   if(response.status === 204 || !response.data){
+    throw new Error("The server returned an empty response");
+  }
   return response.data;
 };

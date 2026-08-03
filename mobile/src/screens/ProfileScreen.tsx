@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect} from 'react';
 import { StyleSheet, ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,23 +8,42 @@ import ProfileButtons from '../components/profile_components/ProfileButtons';
 import StoryHighlight from '../components/profile_components/StoryHighlight';
 import ProfileTabs from '../components/profile_components/ProfileTabs';
 import ProfileGrid from '../components/profile_components/ProfileGrid';
+import { AuthUser } from '../../api/authApi';
+import { getme } from '../../api/authApi';
 
 
 const ProfileScreen = () => {
   const [activeTab, setActiveTab] = useState('posts');
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  return (
+  const fetchProfile = async () => {
+  try {
+    const response = await getme();
+
+    setUser(response);
+  } catch (error) {
+    console.log(error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  fetchProfile();
+}, []);
+   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         bounces={false}
         contentContainerStyle={styles.content}
       >
-        <ProfileHeader />
+        <ProfileHeader user={user} />
 
-        <ProfileInfo />
+        <ProfileInfo user={user}/>
 
-        <ProfileButtons />
+        <ProfileButtons user={user} />
 
         <StoryHighlight />
 

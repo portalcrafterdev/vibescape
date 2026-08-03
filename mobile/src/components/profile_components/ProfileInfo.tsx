@@ -11,7 +11,13 @@ import {
   Plus,
 } from 'lucide-react-native';
 
-const ProfileInfo = () => {
+import { AuthUser } from '../../../api/authApi';
+
+interface infoprops{
+ user: AuthUser| null;
+};
+
+const ProfileInfo = ({user}:infoprops) => {
   return (
     <View style={styles.container}>
 
@@ -21,7 +27,9 @@ const ProfileInfo = () => {
         {/* Profile Image */}
         <View style={styles.avatarContainer}>
           <Image
-            source={require('../../assets/images/Portelcrafterlogo.png')}
+            source= 
+            { user?.avatar_url? {uri:user.avatar_url}:
+              require('../../assets/images/Portelcrafterlogo.png')}
             style={styles.avatar}
           />
 
@@ -38,17 +46,17 @@ const ProfileInfo = () => {
         <View style={styles.statsContainer}>
 
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>147</Text>
+            <Text style={styles.statValue}>{user?.post_count? user.post_count: 33}</Text>
             <Text style={styles.statLabel}>posts</Text>
           </View>
 
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>357</Text>
+            <Text style={styles.statValue}>{user?.followers_count? user.followers_count: 333}</Text>
             <Text style={styles.statLabel}>followers</Text>
           </View>
 
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>338</Text>
+            <Text style={styles.statValue}>{user?.following_count? user.following_count: 333}</Text>
             <Text style={styles.statLabel}>following</Text>
           </View>
 
@@ -59,20 +67,16 @@ const ProfileInfo = () => {
       <View style={styles.bioContainer}>
 
         <Text style={styles.name}>
-          Portal Crafter 🚀
+        {user?.display_name? user.display_name:"Portal Crafter 🚀"} 
         </Text>
 
-        <Text style={styles.bio}>
-          Building Beautiful Mobile Apps
+        <Text style={styles.bio} numberOfLines={2}>
+          { user?.bio? user.bio:"Building Beautiful Mobile Apps Flutter • React Native"}
         </Text>
 
-        <Text style={styles.bio}>
-          Flutter • React Native
-        </Text>
-
-        <Text style={styles.link}>
-          portalcrafter.dev
-        </Text>
+        <TouchableOpacity>
+          <Text style={styles.link}>{user?.banner_url? user.banner_url:"portelcrafter.dev"}</Text>
+        </TouchableOpacity>
 
       </View>
 
@@ -150,17 +154,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-
   bio: {
     color: '#fff',
     fontSize: 15,
     marginTop: 3,
+    width:220,
   },
 
   link: {
     color: '#4da6ff',
     fontSize: 15,
-    marginTop: 3,
     fontWeight: '600',
+    marginTop:4,
   },
 });

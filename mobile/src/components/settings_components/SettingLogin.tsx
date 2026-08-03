@@ -1,12 +1,15 @@
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useLogout } from "../../screens/Logout";
 
 const SettingLogin = ()=>{
+    const logout = useLogout();
+
     return(
         <View style={styles.container}>
         <Text style={styles.txt}>Login</Text>
         <TouchableOpacity> <Text style={styles.account}>Add account </Text></TouchableOpacity>
-        <TouchableOpacity >
+        <TouchableOpacity onPress={logout}>
             <Text style={styles.logout}> Log out</Text>
         </TouchableOpacity>
         </View>

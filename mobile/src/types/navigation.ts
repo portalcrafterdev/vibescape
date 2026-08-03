@@ -10,4 +10,5 @@ export type RootStackParamList = {
   GenderScreen: undefined;
   ThreadsScreen: undefined;
   SettingsScreen: undefined;
+  CreateScreen: undefined;
 };
