@@ -20,3 +20,5 @@ venv/
 .coverage
 htmlcov/
 .media/
+.vscode/launch.json
+.vscode/tasks.json
