@@ -9,22 +9,31 @@ import {
   Platform,
   Alert,
   ScrollView,
-  Image
+  Image,
+  ActivityIndicator
 } from 'react-native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Eye, EyeOff } from 'lucide-react-native';
-import HomeScreen from './HomeScreen';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
+import { loginUser } from '../../api/authApi';
+import { getErrorMessage } from '../utils/apiError';
+import { useProfile } from '../context/ProfileContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 const LoginScreen = ({ navigation }: Props) => {
+  const { loadProfile } = useProfile();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [hidePassword, setHidePassword] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const login = () => {
+
+  const handleLogin = async () => {
+   
+    if (isLoading) return;
+
     if (!email.trim()) {
       Alert.alert('Error', 'Enter Email');
       return;
@@ -35,10 +44,61 @@ const LoginScreen = ({ navigation }: Props) => {
       return;
     }
 
-    Alert.alert('Success', 'Login Button Pressed');
-  };
+   setIsLoading(true);
+   try {
+    const response: any = await loginUser({
+      identifier: email.trim(),
+      password,
+    });
 
-  return (
+    if (!response) {
+      Alert.alert('Login failed', 'The server returned an empty response. Please try again.');
+      return;
+    }
+    if (typeof response === 'string') {
+      Alert.alert('Login failed', response.trim() || 'Unexpected response from the server.');
+      return;
+    }
+    const isEmptyBody = Array.isArray(response)
+      ? response.length === 0
+      : Object.keys(response).length === 0;
+
+    if (isEmptyBody) {
+      Alert.alert('Login failed', 'The server returned no data. Please try again.');
+      return;
+    }
+
+    if (response.success === false || response.error || response.detail) {
+      Alert.alert('Login failed', getErrorMessage({ data: response }, 'Invalid email or password.'));
+      return;
+    }
+
+    const tokens = response.tokens ?? response;
+    if (!tokens?.access_token) {
+      Alert.alert('Login failed', 'The server response was incomplete. Please try again.');
+      return;
+    }
+
+    await AsyncStorage.setItem('accessToken', tokens.access_token);
+    if (tokens.refresh_token) {
+      await AsyncStorage.setItem('refreshToken', tokens.refresh_token);
+    }
+
+    // We only have a token now, so load the profile.
+    await loadProfile();
+
+    navigation.replace('Maintabs');
+
+  } catch (error: any) {
+    console.log("Login Failed", error);
+    Alert.alert('Login failed', getErrorMessage(error?.response ?? error, 'Could not sign you in. Please try again.'));
+
+  } finally {
+    setIsLoading(false);
+  }
+};
+  
+ return (
     <KeyboardAvoidingView
       style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}  
@@ -63,6 +123,12 @@ const LoginScreen = ({ navigation }: Props) => {
         value={email}
         onChangeText={setEmail}
         style={styles.input}
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType="email-address"
+        textContentType="username"
+        returnKeyType="next"
+        editable={!isLoading}
       />
 
       <View style={styles.passwordContainer}>
@@ -73,6 +139,12 @@ const LoginScreen = ({ navigation }: Props) => {
           value={password}
           onChangeText={setPassword}
           style={styles.passwordInput}
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="password"
+          returnKeyType="done"
+          onSubmitEditing={handleLogin}
+          editable={!isLoading}
         />
 
         <TouchableOpacity
@@ -88,6 +160,7 @@ const LoginScreen = ({ navigation }: Props) => {
 
       <TouchableOpacity
         onPress={() => navigation.navigate('Forgot')}
+        disabled={isLoading}
       >
         <Text style={styles.forgot}>
           Forgot Password?
@@ -95,12 +168,18 @@ const LoginScreen = ({ navigation }: Props) => {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.loginButton}
-        onPress={()=> navigation.navigate('Maintabs')}
+        style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+        onPress={handleLogin}
+        disabled={isLoading}
+        activeOpacity={0.8}
       >
-        <Text style={styles.loginText}>
-          Log In
-        </Text>
+        {isLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.loginText}>
+            Log In
+          </Text>
+        )}
       </TouchableOpacity>
 
 <View style={{flexDirection: "row"}}>
@@ -108,6 +187,7 @@ const LoginScreen = ({ navigation }: Props) => {
     <Text style={styles.alread}>Don't have an account?</Text>
       <TouchableOpacity
         onPress={() => navigation.navigate('Register')}
+        disabled={isLoading}
       >
         <Text style={styles.signup}>
            Sign Up
@@ -174,6 +254,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
+  },
+
+  loginButtonDisabled: {
+    opacity: 0.6,
   },
 
   loginText: {

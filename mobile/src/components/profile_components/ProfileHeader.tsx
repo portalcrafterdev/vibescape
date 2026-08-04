@@ -1,9 +1,13 @@
-import React from "react";
+import React, { use } from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { AtSign, ChevronDown, Plus, Menu } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
+import { AuthUser } from "../../../api/authApi";
 
-const ProfileHeader= ()=>{
+interface headerprops{
+ user : AuthUser| null;
+}
+const ProfileHeader= ({user}:headerprops)=>{
   const navigation = useNavigation<any>();
     return (
         <View style={styles.container}>
@@ -13,7 +17,7 @@ const ProfileHeader= ()=>{
 
 
      <TouchableOpacity style={styles.usernameContainer}>
-        <Text style={styles.username}> Portel Crafter</Text>
+        <Text style={styles.username}> {user?.username ?? "loading...."}</Text>
           <ChevronDown size={22} color={"white"}/>
      </TouchableOpacity>
 

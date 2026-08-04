@@ -13,6 +13,11 @@ import BannerScreen from '../components/Edit_Profile/BannerScreen';
 import GenderScreen from '../components/Edit_Profile/GenderScreen';
 import ThreadScreen from '../screens/ThreadsScreen';
 import SettingsScreen from '../screens/Setting';
+import CreateScreen from '../screens/CreateScreen';
+import UserProfileScreen from '../screens/UserProfileScreen';
+import FollowListScreen from '../screens/FollowListScreen';
+import StoryViewer from '../screens/StoryViewer';
+import CommentsScreen from '../screens/CommentsScreen';
 
 const {Navigator , Screen} = createNativeStackNavigator<RootStackParamList>();
 
@@ -68,7 +73,33 @@ const AuthStack = () => {
     <Screen
     name='SettingsScreen'
     component= { SettingsScreen}/>
-    
+
+    <Screen
+    name='CreateScreen'
+    component= {CreateScreen}/>
+
+    <Screen
+    name='UserProfile'
+    component= {UserProfileScreen}/>
+
+    <Screen
+    name='FollowList'
+    component= {FollowListScreen}/>
+
+    <Screen
+    name='StoryViewer'
+    component= {StoryViewer}/>
+
+    {/* A see through sheet so the reel or the post stays visible behind it. */}
+    <Screen
+    name='Comments'
+    component= {CommentsScreen}
+    options={{
+      presentation: 'transparentModal',
+      animation: 'slide_from_bottom',
+      contentStyle: { backgroundColor: 'transparent' },
+    }}/>
+
     </Navigator>
 
     

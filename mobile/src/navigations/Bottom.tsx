@@ -8,7 +8,7 @@ import {
 
 import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
-import CreateScreen from '../screens/CreateScreen';
+import MessageScreen from '../screens/MessageScreen';
 import ReelsScreen from '../screens/ReelsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
@@ -18,10 +18,12 @@ import {
 } from 'lucide-react-native';
 
 import CustomTabBar from '../component/customTabBar';
+import { useNavigation } from '@react-navigation/native';
 
 const Tab = createBottomTabNavigator();
 
 export default function BottomTabs() {
+  const navigation = useNavigation<any>(); 
   return (
     <Tab.Navigator
       tabBar={(props) => <CustomTabBar {...props} />}
@@ -49,7 +51,7 @@ export default function BottomTabs() {
           headerTitleAlign: 'center',
 
           headerLeft: () => (
-            <TouchableOpacity
+            <TouchableOpacity  onPress={() => navigation.push('CreateScreen')}
               style={{ marginLeft: 15 }}
             >
               <Plus
@@ -95,7 +97,7 @@ export default function BottomTabs() {
 
       <Tab.Screen
         name="Create"
-        component={CreateScreen}
+        component={MessageScreen}
         options={{
           headerTitle: 'Create',
           headerShown: false

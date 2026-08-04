@@ -4,12 +4,18 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
+  ActivityIndicator,
 } from "react-native";
 
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, Check } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 
-const EditProfileHeader = () => {
+interface headerProps {
+  onSave: () => void;
+  saving: boolean;
+}
+
+const EditProfileHeader = ({ onSave, saving }: headerProps) => {
   const navigation = useNavigation<any>();
 
   return (
@@ -29,7 +35,17 @@ const EditProfileHeader = () => {
         Edit profile
       </Text>
 
-      <View style={styles.placeholder} />
+      <TouchableOpacity
+        style={styles.placeholder}
+        onPress={onSave}
+        disabled={saving}
+      >
+        {saving ? (
+          <ActivityIndicator size="small" color="#6C63FF" />
+        ) : (
+          <Check size={26} color="#6C63FF" strokeWidth={2.4} />
+        )}
+      </TouchableOpacity>
     </View>
   );
 };
@@ -61,5 +77,6 @@ const styles = StyleSheet.create({
 
   placeholder: {
     width: 36,
+    alignItems: "flex-end",
   },
 });

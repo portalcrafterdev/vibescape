@@ -35,6 +35,12 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSCameraUsageDescription</key>
+	<string>Take photos and record reels for your stories and posts.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Record sound with the reels you film.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choose photos from your library to use as your profile picture and in your posts.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

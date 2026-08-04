@@ -3,13 +3,21 @@ import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import ChevronDown from "lucide-react-native/icons/chevron-down";
 import { useNavigation } from "@react-navigation/native";
 
-const EditProfileGender = ()=>{
+interface genderprops {
+   gender: string;
+}
+
+const EditProfileGender = ({ gender }: genderprops)=>{
    const navigation = useNavigation<any>();
+
     return(
-        <TouchableOpacity style={styles.container } onPress={()=>navigation.push('GenderScreen')}>
+        <TouchableOpacity
+          style={styles.container}
+          onPress={()=>navigation.navigate('GenderScreen', { gender })}
+        >
          <View>
             <Text style={styles.text}>Gender</Text>
-            <Text style={styles.label}>Male</Text>
+            <Text style={styles.label}>{gender || 'Prefer not to say'}</Text>
          </View>
         <ChevronDown
         size={22}

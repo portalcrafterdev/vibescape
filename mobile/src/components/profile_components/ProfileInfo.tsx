@@ -5,13 +5,33 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 
 import {
   Plus,
 } from 'lucide-react-native';
 
-const ProfileInfo = () => {
+import { UserProfile } from '../../../api/authApi';
+
+interface infoprops{
+ // UserProfile, not AuthUser, so this renders both the signed-in user and
+ // anyone else's profile. OwnProfile extends UserProfile, so both fit.
+ user: UserProfile | null;
+ onPressFollowers?: () => void;
+ onPressFollowing?: () => void;
+ /** The camera/plus badge only belongs on the signed-in user's own avatar. */
+ showAddButton?: boolean;
+};
+
+const ProfileInfo = ({
+  user,
+  onPressFollowers,
+  onPressFollowing,
+  showAddButton = true,
+}: infoprops) => {
+  const firstLink = user?.links?.[0];
+
   return (
     <View style={styles.container}>
 
@@ -21,36 +41,50 @@ const ProfileInfo = () => {
         {/* Profile Image */}
         <View style={styles.avatarContainer}>
           <Image
-            source={require('../../assets/images/Portelcrafterlogo.png')}
+            source=
+            { user?.avatar_url? {uri:user.avatar_url}:
+              require('../../assets/images/Portelcrafterlogo.png')}
             style={styles.avatar}
           />
 
-          <TouchableOpacity style={styles.addButton}>
-            <Plus
-              color="#000"
-              size={18}
-              strokeWidth={3}
-            />
-          </TouchableOpacity>
+          {showAddButton && (
+            <TouchableOpacity style={styles.addButton}>
+              <Plus
+                color="#000"
+                size={18}
+                strokeWidth={3}
+              />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Stats */}
         <View style={styles.statsContainer}>
 
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>147</Text>
+            <Text style={styles.statValue}>{user?.posts_count ?? 0}</Text>
             <Text style={styles.statLabel}>posts</Text>
           </View>
 
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>357</Text>
+          <TouchableOpacity
+            style={styles.statItem}
+            onPress={onPressFollowers}
+            disabled={!onPressFollowers}
+            accessibilityRole="button"
+          >
+            <Text style={styles.statValue}>{user?.followers_count ?? 0}</Text>
             <Text style={styles.statLabel}>followers</Text>
-          </View>
+          </TouchableOpacity>
 
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>338</Text>
+          <TouchableOpacity
+            style={styles.statItem}
+            onPress={onPressFollowing}
+            disabled={!onPressFollowing}
+            accessibilityRole="button"
+          >
+            <Text style={styles.statValue}>{user?.following_count ?? 0}</Text>
             <Text style={styles.statLabel}>following</Text>
-          </View>
+          </TouchableOpacity>
 
         </View>
 
@@ -59,20 +93,24 @@ const ProfileInfo = () => {
       <View style={styles.bioContainer}>
 
         <Text style={styles.name}>
-          Portal Crafter 🚀
+        {user?.display_name || user?.username || ''}
         </Text>
 
-        <Text style={styles.bio}>
-          Building Beautiful Mobile Apps
-        </Text>
+        {!!user?.pronouns && (
+          <Text style={styles.pronouns}>{user.pronouns}</Text>
+        )}
 
-        <Text style={styles.bio}>
-          Flutter • React Native
-        </Text>
+        {!!user?.bio && (
+          <Text style={styles.bio} numberOfLines={2}>
+            {user.bio}
+          </Text>
+        )}
 
-        <Text style={styles.link}>
-          portalcrafter.dev
-        </Text>
+        {!!firstLink && (
+          <TouchableOpacity onPress={() => Linking.openURL(firstLink.url)}>
+            <Text style={styles.link}>{firstLink.title || firstLink.url}</Text>
+          </TouchableOpacity>
+        )}
 
       </View>
 
@@ -151,16 +189,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
+  pronouns: {
+    color: '#8e8e93',
+    fontSize: 14,
+    marginTop: 2,
+  },
+
   bio: {
     color: '#fff',
     fontSize: 15,
     marginTop: 3,
+    width:220,
   },
 
   link: {
     color: '#4da6ff',
     fontSize: 15,
-    marginTop: 3,
     fontWeight: '600',
+    marginTop:4,
   },
 });

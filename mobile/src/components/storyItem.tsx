@@ -4,23 +4,54 @@ import {
   Text,
   Image,
   StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 
 import { Plus } from 'lucide-react-native';
 
-const StoryItem = ({ item }: any) => {
+interface storyprops {
+  name: string;
+  imageUrl?: string | null;
+  isMe?: boolean;
+  // No story yet means a grey ring instead of the red one.
+  hasStory?: boolean;
+  loading?: boolean;
+  onPress?: () => void;
+  onAdd?: () => void;
+}
+
+const StoryItem = ({
+  name,
+  imageUrl,
+  isMe,
+  hasStory,
+  loading,
+  onPress,
+  onAdd,
+}: storyprops) => {
   return (
-    <View style={[styles.container]}>
-      <View style={styles.storyBorder}>
+    <TouchableOpacity style={styles.container} onPress={onPress}>
+      <View style={[styles.storyBorder, !hasStory && styles.noStoryBorder]}>
         <Image
-          source={{ uri: item.image }}
+          source={
+            imageUrl
+              ? { uri: imageUrl }
+              : require('../assets/images/Portelcrafterlogo.png')
+          }
           style={styles.image}
         />
 
-        {item.isMe && (
-          <View style={styles.plusButton}>
-            <Plus color="white" size={14} />
+        {loading && (
+          <View style={styles.loading}>
+            <ActivityIndicator size="small" color="#fff" />
           </View>
+        )}
+
+        {isMe && !loading && (
+          <TouchableOpacity style={styles.plusButton} onPress={onAdd}>
+            <Plus color="white" size={14} />
+          </TouchableOpacity>
         )}
       </View>
 
@@ -28,9 +59,9 @@ const StoryItem = ({ item }: any) => {
         numberOfLines={1}
         style={styles.name}
       >
-        {item.username || item.name || item.note}
+        {name}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -54,10 +85,27 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
 
+  noStoryBorder: {
+    borderColor: '#3a3a3a',
+  },
+
   image: {
     width: 68,
     height: 68,
     borderRadius: 34,
+    backgroundColor: '#262626',
+  },
+
+  loading: {
+    position: 'absolute',
+    top: 3,
+    left: 3,
+    right: 3,
+    bottom: 3,
+    borderRadius: 34,
+    backgroundColor: '#000000A0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   name: {
