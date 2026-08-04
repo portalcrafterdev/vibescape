@@ -1,11 +1,27 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, StyleSheet, TextInput, Text } from "react-native";
 
-const EditProfileFields= ()=>{
-   const [name, setName] = useState("PortelCrafter");
-   const [username, setUserName] = useState("Portel_crafter");
-   const [pronouns, setPronouns]= useState("");
-   const [bio, setBio] = useState("");
+interface fieldsprops {
+   name: string;
+   username: string;
+   pronouns: string;
+   bio: string;
+   setName: (value: string) => void;
+   setUsername: (value: string) => void;
+   setPronouns: (value: string) => void;
+   setBio: (value: string) => void;
+}
+
+const EditProfileFields= ({
+   name,
+   username,
+   pronouns,
+   bio,
+   setName,
+   setUsername,
+   setPronouns,
+   setBio,
+}: fieldsprops)=>{
     return(
     <View style={styles.container}>
   <View style={styles.field}>
@@ -25,9 +41,11 @@ const EditProfileFields= ()=>{
     <TextInput
     value={username}
     placeholder="Username"
-    onChangeText={setUserName}
+    onChangeText={setUsername}
     placeholderTextColor="#777"
     style={styles.input}
+    autoCapitalize="none"
+    autoCorrect={false}
     underlineColorAndroid="transparent"
     />
   </View>
@@ -52,6 +70,7 @@ const EditProfileFields= ()=>{
     onChangeText={setBio}
     placeholderTextColor="#777"
     style={styles.input}
+    multiline
     underlineColorAndroid="transparent"
     />
   </View>
@@ -67,7 +86,7 @@ const styles = StyleSheet.create({
     marginTop: 16
  },
 
- label:{    
+ label:{
     color: "#8e8e93",
     fontSize: 13,
     fontWeight: "500",

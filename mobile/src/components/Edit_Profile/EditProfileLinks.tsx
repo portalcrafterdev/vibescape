@@ -2,13 +2,20 @@ import React from "react";
 import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
-const EditProfileLinks = ()=>{
+import { ProfileLink } from "../../../api/authApi";
+
+interface linksprops {
+   links: ProfileLink[];
+}
+
+const EditProfileLinks = ({ links }: linksprops)=>{
     const navigation = useNavigation<any>();
+
     return(
    <View style={styles.container}>
-    <TouchableOpacity onPress={()=>navigation.push('LinkPage')}>
+    <TouchableOpacity onPress={()=>navigation.navigate('LinkPage', { links })}>
         <Text style= {styles.linksbutton}>
-            Add Link
+            {links.length > 0 ? `${links.length} link${links.length > 1 ? 's' : ''}` : 'Add Link'}
         </Text>
     </TouchableOpacity>
 

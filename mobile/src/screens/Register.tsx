@@ -15,14 +15,18 @@ import {
 import { Eye, EyeOff } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { registerUser } from '../../api/authApi';
 import { getErrorMessage } from '../utils/apiError';
+import { useProfile } from '../context/ProfileContext';
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 const USERNAME_MIN = 3;
 const USERNAME_MAX = 30;
 const PASSWORD_MIN = 8;
 
 const RegisterScreen = ({ navigation }: Props) => {
+  const { loadProfile } = useProfile();
+
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -94,7 +98,9 @@ const RegisterScreen = ({ navigation }: Props) => {
 
     setIsLoading(true);
     try {
-      const response = await registerUser({
+      // Typed as any on purpose: the guards below cover the malformed bodies a
+      // proxy can return (HTML text, an error envelope) that AuthResponse rules out.
+      const response: any = await registerUser({
         username: trimmedUsername,
         email: trimmedEmail,
         password,
@@ -142,6 +148,26 @@ const RegisterScreen = ({ navigation }: Props) => {
         );
         return;
       }
+
+      // Register returns a token pair like login does. Without storing it the
+      // app lands on the tabs unauthenticated and every /users call 401s.
+      const tokens = response.tokens ?? response;
+
+      if (!tokens?.access_token) {
+        Alert.alert(
+          'Sign up failed',
+          'The server response was incomplete. Please try signing in.',
+        );
+        return;
+      }
+
+      await AsyncStorage.setItem('accessToken', tokens.access_token);
+
+      if (tokens.refresh_token) {
+        await AsyncStorage.setItem('refreshToken', tokens.refresh_token);
+      }
+
+      await loadProfile();
 
       navigation.replace('Maintabs');
     } catch (err: any) {

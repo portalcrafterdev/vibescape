@@ -18,10 +18,12 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { loginUser } from '../../api/authApi';
 import { getErrorMessage } from '../utils/apiError';
+import { useProfile } from '../context/ProfileContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 const LoginScreen = ({ navigation }: Props) => {
+  const { loadProfile } = useProfile();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [hidePassword, setHidePassword] = useState(true);
@@ -81,7 +83,10 @@ const LoginScreen = ({ navigation }: Props) => {
     if (tokens.refresh_token) {
       await AsyncStorage.setItem('refreshToken', tokens.refresh_token);
     }
-   
+
+    // We only have a token now, so load the profile.
+    await loadProfile();
+
     navigation.replace('Maintabs');
 
   } catch (error: any) {
