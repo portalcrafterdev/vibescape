@@ -21,9 +21,14 @@ const askAndroid = async (): Promise<PhotoAccess> => {
     return result === 'never_ask_again' ? 'blocked' : 'denied';
   }
 
-  // Android 14 added "Select photos", which grants a different permission.
-  const wanted = [PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES];
+  // Android 13 split images and video into two permissions, and reels need
+  // the video one.
+  const wanted = [
+    PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+    PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+  ];
 
+  // Android 14 added "Select photos", which grants a different permission.
   if (version >= 34) {
     wanted.push(PermissionsAndroid.PERMISSIONS.READ_MEDIA_VISUAL_USER_SELECTED);
   }

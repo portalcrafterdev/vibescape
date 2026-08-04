@@ -17,9 +17,11 @@ import SearchItem from '../components/SearchItems';
 import UserRow from '../components/UserRow';
 import { searchData } from '../data/SearchData';
 import { searchUsers, UserSummary } from '../../api/authApi';
+import { useProfile } from '../context/ProfileContext';
 
 const SearchScreen = () => {
   const navigation = useNavigation<any>();
+  const { user: me } = useProfile();
 
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState<UserSummary[]>([]);
@@ -39,7 +41,10 @@ const SearchScreen = () => {
     const timer = setTimeout(async () => {
       try {
         const response = await searchUsers(text, 20);
-        setUsers(response);
+
+        // The API sends the logged in user back like anyone else, and there is
+        // no point searching for yourself.
+        setUsers(response.filter((item) => item.id !== me?.id));
       } catch (error) {
         console.log('Search failed', error);
         setUsers([]);

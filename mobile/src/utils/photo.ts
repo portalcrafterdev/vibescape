@@ -12,6 +12,10 @@ const CONTENT_TYPES: Record<string, string> = {
   png: 'image/png',
   gif: 'image/gif',
   webp: 'image/webp',
+  // Reels pick videos from the same gallery.
+  mp4: 'video/mp4',
+  mov: 'video/quicktime',
+  m4v: 'video/x-m4v',
 };
 
 /**

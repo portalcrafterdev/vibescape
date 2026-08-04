@@ -5,6 +5,7 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 
 import {
@@ -15,43 +16,128 @@ import {
   EllipsisVertical,
 } from 'lucide-react-native';
 
+import { useNavigation } from '@react-navigation/native';
+
+import { likePost, unlikePost, deletePost, PostOut } from '../../api/authApi';
+
 interface Props {
-  item: any;
+  post: PostOut;
+  // Lets the feed drop the card once the post is gone.
+  onDeleted?: (postId: string) => void;
 }
 
-const PostCard = ({ item }: Props) => {
-  const [liked, setLiked] = useState(false);
+// Turns the created_at date into "5m", "3h", "2d".
+const timeAgo = (date: string) => {
+  const seconds = (Date.now() - new Date(date).getTime()) / 1000;
+
+  if (seconds < 60) return 'now';
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+
+  return `${Math.floor(days / 7)}w`;
+};
+
+const PostCard = ({ post, onDeleted }: Props) => {
+  const navigation = useNavigation<any>();
+
+  const [liked, setLiked] = useState(!!post.is_liked);
+  const [likes, setLikes] = useState(post.likes_count ?? 0);
+  const [busy, setBusy] = useState(false);
+
+  const handleLike = async () => {
+    if (busy) return;
+
+    setBusy(true);
+
+    try {
+      const response = liked
+        ? await unlikePost(post.id)
+        : await likePost(post.id);
+
+      setLiked(response.liked);
+      setLikes(response.likes_count);
+    } catch (error) {
+      console.log('Like failed', error);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Only my own posts can be deleted, so there is nothing to show on others.
+  const handleMenu = () => {
+    if (!post.is_mine) return;
+
+    Alert.alert('Delete post', 'This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deletePost(post.id);
+            if (onDeleted) onDeleted(post.id);
+          } catch (error) {
+            console.log('Delete post failed', error);
+            Alert.alert('Could not delete', 'Please try again.');
+          }
+        },
+      },
+    ]);
+  };
+
+  const openAuthor = () => {
+    navigation.push('UserProfile', { userId: post.author.id });
+  };
+
+  const openComments = () => {
+    navigation.push('Comments', { postId: post.id });
+  };
 
   return (
     <View style={styles.container}>
 
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.userRow}>
+        <TouchableOpacity style={styles.userRow} onPress={openAuthor}>
           <Image
-            source={{ uri: item.profileImage }}
+            source={
+              post.author.avatar_url
+                ? { uri: post.author.avatar_url }
+                : require('../assets/images/Portelcrafterlogo.png')
+            }
             style={styles.avatar}
           />
 
           <Text style={styles.username}>
-            {item.username}
+            {post.author.username}
           </Text>
-        </View>
+        </TouchableOpacity>
 
-        <EllipsisVertical color="white" size={20} />
+        <TouchableOpacity onPress={handleMenu}>
+          <EllipsisVertical color="white" size={20} />
+        </TouchableOpacity>
       </View>
 
       {/* Post Image */}
-      <Image
-        source={{ uri: item.postImage }}
-        style={styles.postImage}
-      />
+      {!!post.image_url && (
+        <Image
+          source={{ uri: post.image_url }}
+          style={styles.postImage}
+        />
+      )}
 
       {/* Action Icons */}
       <View style={styles.actions}>
 
         <View style={styles.leftIcons}>
-          <TouchableOpacity onPress={() => setLiked(!liked)}>
+          <TouchableOpacity onPress={handleLike}>
             <Heart
               color={liked ? 'red' : 'white'}
               fill={liked ? 'red' : 'none'}
@@ -59,7 +145,7 @@ const PostCard = ({ item }: Props) => {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.iconSpacing}>
+          <TouchableOpacity style={styles.iconSpacing} onPress={openComments}>
             <MessageCircle color="white" size={26} />
           </TouchableOpacity>
 
@@ -76,25 +162,31 @@ const PostCard = ({ item }: Props) => {
 
       {/* Likes */}
       <Text style={styles.likes}>
-        {item.likes} likes
+        {likes} likes
       </Text>
 
       {/* Caption */}
-      <Text style={styles.caption}>
-        <Text style={{ fontWeight: 'bold' }}>
-          {item.username}
-        </Text>{' '}
-        {item.caption}
-      </Text>
+      {!!post.caption && (
+        <Text style={styles.caption}>
+          <Text style={styles.bold}>
+            {post.author.username}
+          </Text>{' '}
+          {post.caption}
+        </Text>
+      )}
 
       {/* Comments */}
-      <Text style={styles.comments}>
-        View all {item.comments} comments
-      </Text>
+      <TouchableOpacity onPress={openComments}>
+        <Text style={styles.comments}>
+          {post.comments_count
+            ? `View all ${post.comments_count} comments`
+            : 'Add a comment'}
+        </Text>
+      </TouchableOpacity>
 
       {/* Time */}
       <Text style={styles.time}>
-        {item.time}
+        {timeAgo(post.created_at)}
       </Text>
 
     </View>
@@ -125,6 +217,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
+    backgroundColor: '#262626',
   },
 
   username: {
@@ -136,6 +229,7 @@ const styles = StyleSheet.create({
   postImage: {
     width: '100%',
     height: 420,
+    backgroundColor: '#111',
   },
 
   actions: {
@@ -164,6 +258,10 @@ const styles = StyleSheet.create({
     color: 'white',
     marginHorizontal: 12,
     marginTop: 6,
+  },
+
+  bold: {
+    fontWeight: 'bold',
   },
 
   comments: {

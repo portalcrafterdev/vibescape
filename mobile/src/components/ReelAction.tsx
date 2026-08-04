@@ -16,23 +16,47 @@ import {
   MoreHorizontal,
 } from 'lucide-react-native';
 
-const ReelActions = ({ item }: any) => {
+interface actionprops {
+  liked: boolean;
+  likes: number;
+  comments: number;
+  albumUrl?: string | null;
+  isMine: boolean;
+  onLike: () => void;
+  onComment: () => void;
+  onDelete: () => void;
+}
+
+const ReelActions = ({
+  liked,
+  likes,
+  comments,
+  albumUrl,
+  isMine,
+  onLike,
+  onComment,
+  onDelete,
+}: actionprops) => {
   return (
     <View style={styles.container}>
 
-   <TouchableOpacity style={styles.item}>
-  <Heart color="white" size={23} strokeWidth={2} />
-  <Text style={styles.count}>Likes</Text>
+   <TouchableOpacity style={styles.item} onPress={onLike}>
+  <Heart
+    color={liked ? '#ff3040' : 'white'}
+    fill={liked ? '#ff3040' : 'none'}
+    size={23}
+    strokeWidth={2}
+  />
+  <Text style={styles.count}>{likes}</Text>
 </TouchableOpacity>
 
-<TouchableOpacity style={styles.item}>
+<TouchableOpacity style={styles.item} onPress={onComment}>
   <MessageCircle color="white" size={23} strokeWidth={2} />
-  <Text style={styles.count}>784</Text>
+  <Text style={styles.count}>{comments}</Text>
 </TouchableOpacity>
 
 <TouchableOpacity style={styles.item}>
   <Repeat2 color="white" size={23} strokeWidth={2} />
-  <Text style={styles.count}>1,370</Text>
 </TouchableOpacity>
 
 <TouchableOpacity style={styles.item}>
@@ -41,19 +65,23 @@ const ReelActions = ({ item }: any) => {
 
 <TouchableOpacity style={styles.item}>
   <Bookmark color="white" size={23} strokeWidth={2} />
-  <Text style={styles.count}>3,694</Text>
 </TouchableOpacity>
 
-<TouchableOpacity style={styles.item}>
-  <MoreHorizontal color="white" size={23} strokeWidth={2} />
-</TouchableOpacity>
+{/* Only my own reels have anything behind this. */}
+{isMine && (
+  <TouchableOpacity style={styles.item} onPress={onDelete}>
+    <MoreHorizontal color="white" size={23} strokeWidth={2} />
+  </TouchableOpacity>
+)}
 
-<TouchableOpacity style={styles.albumContainer}>
-  <Image
-    source={{ uri: item.album }}
-    style={styles.albumImage}
-  />
-</TouchableOpacity>
+{!!albumUrl && (
+  <TouchableOpacity style={styles.albumContainer}>
+    <Image
+      source={{ uri: albumUrl }}
+      style={styles.albumImage}
+    />
+  </TouchableOpacity>
+)}
 
     </View>
   );

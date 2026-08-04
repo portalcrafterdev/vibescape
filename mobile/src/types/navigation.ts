@@ -13,8 +13,11 @@ export type RootStackParamList = {
   GenderScreen: { gender?: string } | undefined;
   ThreadsScreen: undefined;
   SettingsScreen: undefined;
-  CreateScreen: undefined;
+  // The reels screen passes mode 'REEL' so it opens ready to film.
+  CreateScreen: { mode?: string } | undefined;
   UserProfile: { userId?: string; username?: string };
+  StoryViewer: { userId: string; username?: string };
+  Comments: { postId: string };
   FollowList: {
     userId: string;
     username?: string;

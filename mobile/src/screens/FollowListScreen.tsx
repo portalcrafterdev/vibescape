@@ -25,6 +25,7 @@ const FollowListScreen = ({ route, navigation }: Props) => {
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const loadUsers = async (nextCursor: string | null) => {
     try {
@@ -49,10 +50,13 @@ const FollowListScreen = ({ route, navigation }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, mode]);
 
-  const loadMore = () => {
-    if (hasMore && cursor && !loading) {
-      loadUsers(cursor);
-    }
+  // The guard stops a fast scroll asking for the same page twice.
+  const loadMore = async () => {
+    if (!hasMore || !cursor || loadingMore) return;
+
+    setLoadingMore(true);
+    await loadUsers(cursor);
+    setLoadingMore(false);
   };
 
   // Remember the new state so it survives when more pages load.

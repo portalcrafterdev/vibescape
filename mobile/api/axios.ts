@@ -75,8 +75,10 @@ api.interceptors.response.use(
 
       } catch (error) {
 
-        // Session Expired
-        await AsyncStorage.clear();
+        // Session Expired. Only the tokens go, so anything else the app saved
+        // is left alone.
+        await AsyncStorage.removeItem("accessToken");
+        await AsyncStorage.removeItem("refreshToken");
 
         console.log("Session Expired");
 

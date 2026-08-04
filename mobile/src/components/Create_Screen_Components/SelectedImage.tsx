@@ -5,21 +5,35 @@ import {
   StyleSheet,
   Dimensions,
   Text,
+  TouchableOpacity,
 } from "react-native";
+
+import { Maximize2 } from "lucide-react-native";
 
 interface SelectedImageProps {
   imageUri: string | null;
+  // "cover" fills the square, "contain" shows the whole picture.
+  fit: "cover" | "contain";
+  onToggleFit: () => void;
 };
+
 const { width } = Dimensions.get("window");
-const SelectedImage = ({ imageUri }: SelectedImageProps) => {
+
+const SelectedImage = ({ imageUri, fit, onToggleFit }: SelectedImageProps) => {
   return (
     <View style={styles.container}>
       {imageUri ? (
-        <Image
-          source={{ uri: imageUri }}
-          style={styles.image}
-          resizeMode="cover"
-        />
+        <>
+          <Image
+            source={{ uri: imageUri }}
+            style={styles.image}
+            resizeMode={fit}
+          />
+
+          <TouchableOpacity style={styles.fitButton} onPress={onToggleFit}>
+            <Maximize2 size={18} color="#fff" />
+          </TouchableOpacity>
+        </>
       ) : (
         <View style={styles.placeholder}>
           <Text style={styles.placeholderText}>
@@ -43,6 +57,18 @@ const styles = StyleSheet.create({
   image: {
     width: "100%",
     height: "100%",
+  },
+
+  fitButton: {
+    position: "absolute",
+    left: 12,
+    bottom: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#00000099",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   placeholder: {

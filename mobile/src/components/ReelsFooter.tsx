@@ -7,43 +7,58 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-import { Music2 } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const ReelFooter = ({ item }: any) => {
+import { ReelOut } from '../../api/authApi';
+
+const ReelFooter = ({ reel }: { reel: ReelOut }) => {
+  const navigation = useNavigation<any>();
+
   return (
     <View style={styles.container}>
 
       {/* User Row */}
       <View style={styles.userRow}>
 
-        <Image
-          source={{ uri: item.profile }}
-          style={styles.profile}
-        />
+        <TouchableOpacity
+          onPress={() =>
+            navigation.push('UserProfile', { userId: reel.author.id })
+          }
+        >
+          <Image
+            source={
+              reel.author.avatar_url
+                ? { uri: reel.author.avatar_url }
+                : require('../assets/images/Portelcrafterlogo.png')
+            }
+            style={styles.profile}
+          />
+        </TouchableOpacity>
 
         <Text style={styles.username}>
-          {item.username}
+          {reel.author.username}
         </Text>
 
-        <TouchableOpacity style={styles.followButton}>
-          <Text style={styles.followText}>
-            Follow
-          </Text>
-        </TouchableOpacity>
+        {!reel.is_mine && (
+          <TouchableOpacity style={styles.followButton}>
+            <Text style={styles.followText}>
+              Follow
+            </Text>
+          </TouchableOpacity>
+        )}
 
       </View>
 
- 
-
       {/* Caption */}
-      <Text style={styles.caption}>
-        {item.caption}
-      </Text>
+      {!!reel.caption && (
+        <Text style={styles.caption}>
+          {reel.caption}
+        </Text>
+      )}
 
-      {/* Liked By */}
+      {/* Views */}
       <Text style={styles.likes}>
-        Liked by <Text style={styles.bold}>john_doe</Text> and{' '}
-        <Text style={styles.bold}>3,521 others</Text>
+        <Text style={styles.bold}>{reel.views_count ?? 0}</Text> views
       </Text>
 
     </View>
@@ -69,6 +84,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+    backgroundColor: '#262626',
   },
 
   username: {
@@ -98,19 +114,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 14,
     lineHeight: 20,
-  },
-
-  musicRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-
-  musicText: {
-    color: '#fff',
-    marginLeft: 8,
-    flex: 1,
-    fontSize: 13,
   },
 
   likes: {

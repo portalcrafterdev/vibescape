@@ -66,6 +66,35 @@ jest.mock('@react-native-camera-roll/camera-roll', () => ({
   },
 }));
 
+// VisionCamera builds its native session at import time, which is not there
+// under test. The screens that use it are never rendered by the smoke test.
+jest.mock('react-native-vision-camera', () => ({
+  __esModule: true,
+  Camera: () => null,
+  useCameraDevice: () => ({ id: 'test-camera' }),
+  useCameraPermission: () => ({
+    hasPermission: true,
+    requestPermission: jest.fn(() => Promise.resolve(true)),
+  }),
+  useMicrophonePermission: () => ({
+    hasPermission: true,
+    requestPermission: jest.fn(() => Promise.resolve(true)),
+  }),
+  usePhotoOutput: () => ({
+    capturePhotoToFile: jest.fn(() =>
+      Promise.resolve({ filePath: '/tmp/photo.jpg' }),
+    ),
+  }),
+  useVideoOutput: () => ({
+    createRecorder: jest.fn(() =>
+      Promise.resolve({
+        startRecording: jest.fn(() => Promise.resolve()),
+        stopRecording: jest.fn(() => Promise.resolve()),
+      }),
+    ),
+  }),
+}));
+
 // react-native-screens calls into native code on mount; disable it for tests.
 jest.mock('react-native-screens', () => {
   const actual = jest.requireActual('react-native-screens');
