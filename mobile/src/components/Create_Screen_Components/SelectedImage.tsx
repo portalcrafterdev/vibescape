@@ -9,10 +9,8 @@ import {
 
 interface SelectedImageProps {
   imageUri: string | null;
-}
-
+};
 const { width } = Dimensions.get("window");
-
 const SelectedImage = ({ imageUri }: SelectedImageProps) => {
   return (
     <View style={styles.container}>
