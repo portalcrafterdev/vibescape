@@ -35,23 +35,38 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest: any = error.config;
 
+    // Signing in answers 401 by itself when the password is wrong, so those
+    // calls must not be treated as an expired session. Refreshing after a
+    // failed login would send an empty token and hide the real message.
+    const isAuthCall = String(originalRequest?.url ?? "").startsWith("/auth/");
+
     // Access Token Expired
     if (
       error.response?.status === 401 &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !isAuthCall
     ) {
       originalRequest._retry = true;
 
-      try {
-        // Get Refresh Token
-        const refreshToken =
-          await AsyncStorage.getItem("refreshToken");
+      // Get Refresh Token
+      const savedRefreshToken =
+        await AsyncStorage.getItem("refreshToken");
 
+      // Nothing to refresh with, so the session is simply over.
+      if (!savedRefreshToken) {
+        await AsyncStorage.removeItem("accessToken");
+
+        console.log("Session Expired");
+
+        return Promise.reject(error);
+      }
+
+      try {
         // Get New Access Token
         const response = await axios.post(
           `${BASE_URL}/auth/refresh`,
           {
-            refresh_token: refreshToken,
+            refresh_token: savedRefreshToken,
           }
         );
 

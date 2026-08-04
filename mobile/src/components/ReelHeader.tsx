@@ -12,26 +12,30 @@ import {
 import {
   Plus,
   ChevronDown,
+  ArrowLeft,
 } from 'lucide-react-native';
 
 import { useNavigation } from '@react-navigation/native';
 
-const ReelsHeader = () => {
+// Opened from a profile the corner goes back, everywhere else it creates.
+const ReelsHeader = ({ onBack }: { onBack?: () => void }) => {
   const navigation = useNavigation<any>();
 
   return (
     <View style={styles.container}>
 
-      {/* Opens the create screen already on REEL, so it starts on the camera. */}
       <TouchableOpacity
-        onPress={() =>
-          navigation.push('CreateScreen', { mode: 'REEL' })
+        onPress={
+          onBack
+            ? onBack
+            : () => navigation.push('CreateScreen', { mode: 'REEL' })
         }
       >
-        <Plus
-          color="white"
-          size={28}
-        />
+        {onBack ? (
+          <ArrowLeft color="white" size={28} />
+        ) : (
+          <Plus color="white" size={28} />
+        )}
       </TouchableOpacity>
 
       <View style={styles.center}>

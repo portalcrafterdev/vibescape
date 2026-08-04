@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   ScrollView,
@@ -15,6 +15,7 @@ import ProfileButtons from '../components/profile_components/ProfileButtons';
 import StoryHighlight from '../components/profile_components/StoryHighlight';
 import ProfileTabs from '../components/profile_components/ProfileTabs';
 import ProfileGrid from '../components/profile_components/ProfileGrid';
+import ProfileReels from '../components/profile_components/ProfileReels';
 import { useProfile } from '../context/ProfileContext';
 
 const ProfileScreen = () => {
@@ -23,12 +24,25 @@ const ProfileScreen = () => {
 
   const [activeTab, setActiveTab] = useState('posts');
   const [refreshing, setRefreshing] = useState(false);
+  // Bumped to make the grid load again.
+  const [reload, setReload] = useState(0);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadProfile();
+    setReload(reload + 1);
     setRefreshing(false);
   };
+
+  // Coming back from the create screen, or from anywhere else, picks up a new
+  // post and the count that goes with it.
+  useEffect(() => {
+    return navigation.addListener('focus', () => {
+      loadProfile();
+      setReload((old) => old + 1);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation]);
 
   const openFollowList = (mode: 'followers' | 'following') => {
     if (!user) return;
@@ -74,9 +88,23 @@ const ProfileScreen = () => {
               setActiveTab={setActiveTab}
             />
 
-            {activeTab === 'posts' && <ProfileGrid />}
+            {activeTab === 'posts' && (
+              <ProfileGrid
+                userId={user?.id}
+                reload={reload}
+                canDelete
+                onDeleted={loadProfile}
+              />
+            )}
 
-            {activeTab === 'reels' && <Text>This is reel screen</Text>}
+            {activeTab === 'reels' && (
+              <ProfileReels
+                userId={user?.id}
+                reload={reload}
+                canDelete
+                onDeleted={loadProfile}
+              />
+            )}
 
             {activeTab === 'tagged' && <Text>This is Tagged Screen</Text>}
           </>

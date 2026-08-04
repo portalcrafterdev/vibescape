@@ -1,4 +1,4 @@
-import { ProfileLink } from '../../api/authApi';
+import { ProfileLink, ReelOut } from '../../api/authApi';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -18,6 +18,8 @@ export type RootStackParamList = {
   UserProfile: { userId?: string; username?: string };
   StoryViewer: { userId: string; username?: string };
   Comments: { postId: string };
+  // The profile hands over the reels it already has, and which one was tapped.
+  ReelViewer: { reels: ReelOut[]; index: number };
   FollowList: {
     userId: string;
     username?: string;

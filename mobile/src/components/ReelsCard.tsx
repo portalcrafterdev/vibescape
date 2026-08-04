@@ -29,6 +29,7 @@ interface cardprops {
   isActive: boolean;
   onDeleted: (reelId: string) => void;
   onOpenComments: () => void;
+  onBack?: () => void;
 }
 
 const ReelCard = ({
@@ -37,6 +38,7 @@ const ReelCard = ({
   isActive,
   onDeleted,
   onOpenComments,
+  onBack,
 }: cardprops) => {
   const [liked, setLiked] = useState(!!reel.is_liked);
   const [likes, setLikes] = useState(reel.likes_count ?? 0);
@@ -126,7 +128,7 @@ const ReelCard = ({
       )}
 
       {/* Top Header */}
-      <ReelsHeader />
+      <ReelsHeader onBack={onBack} />
 
       {/* Right Side Actions */}
       <ReelActions

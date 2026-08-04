@@ -1,46 +1,157 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   FlatList,
   Image,
   StyleSheet,
   View,
+  Text,
   Dimensions,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 
 import { Pin } from 'lucide-react-native';
 
-import { profilePosts } from '../../data/ProfilePosts';
+import { getUserPosts, deletePost, PostGridItem } from '../../../api/authApi';
 
 const SIZE = Dimensions.get('window').width / 3;
 
-const ProfileGrid = () => {
+interface gridprops {
+  userId?: string;
+  // Changes when the screen is refreshed, which loads the grid again.
+  reload?: number;
+  // Only the signed-in user can remove their own posts.
+  canDelete?: boolean;
+  onDeleted?: () => void;
+}
+
+const ProfileGrid = ({ userId, reload, canDelete, onDeleted }: gridprops) => {
+  const [posts, setPosts] = useState<PostGridItem[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const loadPosts = async (nextCursor: string | null) => {
+    if (!userId) return;
+
+    try {
+      const response = await getUserPosts(userId, {
+        cursor: nextCursor,
+        limit: 30,
+      });
+
+      // First page replaces the grid, later pages add to it.
+      setPosts(
+        nextCursor ? (old) => [...old, ...response.items] : response.items,
+      );
+      setCursor(response.next_cursor ?? null);
+      setHasMore(!!response.has_more && !!response.next_cursor);
+    } catch (error) {
+      console.log('Load posts failed', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPosts(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, reload]);
+
+  // The grid does not scroll on its own, so more posts come from a button
+  // rather than from reaching the end of a list.
+  const loadMore = async () => {
+    if (loadingMore) return;
+
+    setLoadingMore(true);
+    await loadPosts(cursor);
+    setLoadingMore(false);
+  };
+
+  const handleDelete = (post: PostGridItem) => {
+    if (!canDelete) return;
+
+    Alert.alert('Delete post', 'This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deletePost(post.id);
+            setPosts((old) => old.filter((item) => item.id !== post.id));
+
+            // The count lives on the profile, so it is reloaded from there.
+            if (onDeleted) onDeleted();
+          } catch (error) {
+            console.log('Delete post failed', error);
+            Alert.alert('Could not delete', 'Please try again.');
+          }
+        },
+      },
+    ]);
+  };
+
+  if (loading) {
+    return <ActivityIndicator style={styles.loader} color="#fff" />;
+  }
+
+  if (posts.length === 0) {
+    return <Text style={styles.empty}>No posts yet.</Text>;
+  }
+
   return (
-    <FlatList
-      data={profilePosts}
-      keyExtractor={(item) => item.id}
-      numColumns={3}
-      scrollEnabled={false}
-      renderItem={({ item }) => (
-        <View style={styles.item}>
+    <>
+      <FlatList
+        data={posts}
+        keyExtractor={(item) => item.id}
+        numColumns={3}
+        scrollEnabled={false}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.item}
+            onLongPress={() => handleDelete(item)}
+            activeOpacity={0.8}
+          >
+            <Image
+              source={
+                item.image_url
+                  ? { uri: item.image_url }
+                  : require('../../assets/images/Portelcrafterlogo.png')
+              }
+              style={styles.image}
+            />
 
-          <Image
-            source={{ uri: item.image }}
-            style={styles.image}
-          />
+            {item.pinned && (
+              <View style={styles.pin}>
+                <Pin
+                  size={14}
+                  color="#fff"
+                  fill="#fff"
+                />
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
+      />
 
-          {item.pinned && (
-            <View style={styles.pin}>
-              <Pin
-                size={14}
-                color="#fff"
-                fill="#fff"
-              />
-            </View>
+      {hasMore && (
+        <TouchableOpacity
+          style={styles.more}
+          onPress={loadMore}
+          disabled={loadingMore}
+        >
+          {loadingMore ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.moreText}>Show more</Text>
           )}
-
-        </View>
+        </TouchableOpacity>
       )}
-    />
+    </>
   );
 };
 
@@ -57,11 +168,35 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+    backgroundColor: '#262626',
   },
 
   pin: {
     position: 'absolute',
     top: 8,
     right: 8,
+  },
+
+  loader: {
+    marginTop: 40,
+  },
+
+  empty: {
+    color: '#8e8e93',
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: 40,
+  },
+
+  more: {
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  moreText: {
+    color: '#4da6ff',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
