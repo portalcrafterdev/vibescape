@@ -2,12 +2,17 @@ import { ChevronDown, SquarePen } from "lucide-react-native";
 import React from "react";
 import {View,Text,StyleSheet, TouchableOpacity,} from "react-native";
 
-const MessageHeader = () => {
+interface headerprops {
+  username?: string;
+  onCompose?: () => void;
+}
+
+const MessageHeader = ({ username, onCompose }: headerprops) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.usernameContainer}>
         <Text style={styles.username}>
-          portel_crafter
+          {username ?? ''}
         </Text>
 
         <ChevronDown
@@ -17,7 +22,7 @@ const MessageHeader = () => {
         />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.composeButton}>
+      <TouchableOpacity style={styles.composeButton} onPress={onCompose}>
         <SquarePen
           size={28}
           color="#fff"

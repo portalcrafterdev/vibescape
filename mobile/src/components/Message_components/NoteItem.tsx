@@ -1,24 +1,39 @@
 import React from "react";
-import { View, Text, StyleSheet, Image} from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity} from "react-native";
 
-const NoteItem = ({image, username, note}: any)=>{
+interface noteprops {
+  image?: string | null;
+  username: string;
+  // The API has no notes, so the bubble is left off when there is nothing
+  // to put in it.
+  note?: string | null;
+  onPress?: () => void;
+}
+
+const NoteItem = ({image, username, note, onPress}: noteprops)=>{
     return(
-        <View style={styles.container}>
-         <View style= {styles.bubble}>
-            <Text style={styles.notetext} numberOfLines={2}>
-                {note}
-            </Text>
-        </View>
+        <TouchableOpacity style={styles.container} onPress={onPress}>
+         {!!note && (
+           <View style= {styles.bubble}>
+              <Text style={styles.notetext} numberOfLines={2}>
+                  {note}
+              </Text>
+          </View>
+         )}
 
         <Image
-        source={{ uri: image }}
-        style= {styles.image}
+        source={
+          image
+            ? { uri: image }
+            : require("../../assets/images/Portelcrafterlogo.png")
+        }
+        style= {[styles.image, !note && styles.imageNoNote]}
         />
 
         <Text style= {styles.username} numberOfLines={2}>
          {username}
         </Text>
-        </View>
+        </TouchableOpacity>
     );
 };
 export default NoteItem;
@@ -62,6 +77,12 @@ const styles= StyleSheet.create({
 
     borderWidth: 2,
     borderColor: "#262626",
+    backgroundColor: "#262626",
+ },
+
+ // Without a bubble above it there is no gap to leave.
+ imageNoNote: {
+    marginTop: 0,
  },
 
  username:{

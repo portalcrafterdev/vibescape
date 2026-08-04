@@ -1,20 +1,29 @@
 import React from "react";
 import { View, StyleSheet, FlatList  } from "react-native";
 import NoteItem from "./NoteItem";
-import { notesdata } from "../../data/NotesData";
+import { UserSummary } from "../../../api/authApi";
 
-const NoteSection = ()=>{
+interface noteprops {
+  people: UserSummary[];
+  onPress: (person: UserSummary) => void;
+}
+
+// The API has no notes, so this row shows the people you follow instead.
+const NoteSection = ({ people, onPress }: noteprops)=>{
+    if (people.length === 0) return null;
+
     return(
     <View style= {styles.container}>
         <FlatList
         horizontal
+        showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
-        data={notesdata}
+        data={people}
         renderItem={({item})=>(
         <NoteItem
-        image= {item.image}
+        image= {item.avatar_url}
         username= {item.username}
-        note= {item.note}
+        onPress={() => onPress(item)}
         />
         )}
         contentContainerStyle= {styles.content}

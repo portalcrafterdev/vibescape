@@ -2,7 +2,12 @@ import { Search } from "lucide-react-native";
 import React from "react";
 import {View, StyleSheet, TextInput, } from "react-native"
 
-const MessageSearchBar = ()=>{
+interface searchprops {
+  value?: string;
+  onChangeText?: (text: string) => void;
+}
+
+const MessageSearchBar = ({ value, onChangeText }: searchprops)=>{
     return(
         <View style={styles.container}>
         <Search
@@ -11,7 +16,12 @@ const MessageSearchBar = ()=>{
         />
 
         <TextInput
-        placeholder="Search or ask Meta AI"
+        value={value}
+        onChangeText={onChangeText}
+        placeholder="Search"
+        placeholderTextColor="#8e8e93"
+        autoCapitalize="none"
+        autoCorrect={false}
         style= {styles.textinput}
         />
         </View>
@@ -33,6 +43,8 @@ const styles = StyleSheet.create({
  },
 
  textinput: {
+  flex: 1,
+  color: "#fff",
   marginLeft: 10,
   fontSize: 17
  }

@@ -20,6 +20,7 @@ export type RootStackParamList = {
   Comments: { postId: string };
   // The profile hands over the reels it already has, and which one was tapped.
   ReelViewer: { reels: ReelOut[]; index: number };
+  Chat: { conversationId: string; username?: string };
   FollowList: {
     userId: string;
     username?: string;

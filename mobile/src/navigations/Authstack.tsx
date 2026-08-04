@@ -19,6 +19,7 @@ import FollowListScreen from '../screens/FollowListScreen';
 import StoryViewer from '../screens/StoryViewer';
 import CommentsScreen from '../screens/CommentsScreen';
 import ReelViewerScreen from '../screens/ReelViewerScreen';
+import ChatScreen from '../screens/ChatScreen';
 
 const {Navigator , Screen} = createNativeStackNavigator<RootStackParamList>();
 
@@ -94,6 +95,10 @@ const AuthStack = () => {
     <Screen
     name='ReelViewer'
     component= {ReelViewerScreen}/>
+
+    <Screen
+    name='Chat'
+    component= {ChatScreen}/>
 
     {/* A see through sheet so the reel or the post stays visible behind it. */}
     <Screen

@@ -1,13 +1,38 @@
 import React from "react";
 import {View,Text,Image,TouchableOpacity, StyleSheet,} from "react-native";
 
-const MessageItem = ({ item }: any) => {
+import { ConversationRow } from "../../../api/authApi";
+
+interface itemprops {
+  item: ConversationRow;
+  onPress?: () => void;
+}
+
+const MessageItem = ({ item, onPress }: itemprops) => {
+  const unread = !!item.unread_count && item.unread_count > 0;
+
+  // Just the clock time, which is all the row has room for.
+  const time = item.last_message_at
+    ? new Date(item.last_message_at).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+
   return (
-    <TouchableOpacity style={styles.container} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={styles.container}
+      activeOpacity={0.8}
+      onPress={onPress}
+    >
 
       <View style={styles.avatarContainer}>
         <Image
-          source={{ uri: item.image }}
+          source={
+            item.other.avatar_url
+              ? { uri: item.other.avatar_url }
+              : require("../../assets/images/Portelcrafterlogo.png")
+          }
           style={styles.avatar}
         />
 
@@ -20,26 +45,27 @@ const MessageItem = ({ item }: any) => {
           numberOfLines={1}
           style={styles.username}
         >
-          {item.username}
+          {item.other.username}
         </Text>
 
         <View style={styles.bottomRow}>
           <Text
             numberOfLines={1}
-            style={[styles.message,
-            item.unread && styles.unreadMessage]}
+            style={[styles.message, unread && styles.unreadMessage]}
           >
-            {item.message}
+            {item.last_message || "Say hello"}
           </Text>
 
-          <Text style={styles.time}>
-            • {item.time}
-          </Text>
+          {!!time && (
+            <Text style={styles.time}>
+              • {time}
+            </Text>
+          )}
         </View>
 
       </View>
 
-      {item.unread && (
+      {unread && (
         <View style={styles.unreadDot} />
       )}
 
