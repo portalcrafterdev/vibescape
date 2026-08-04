@@ -23,6 +23,19 @@ class ProfileLink(BaseModel):
         return v
 
 
+class ProfileLinkOut(BaseModel):
+    """A profile link on the way out.
+
+    `url` is a plain str, not HttpUrl, on purpose. The write side above validates
+    with HttpUrl, so nothing malformed gets stored — but a *response* model that
+    re-validates would turn one bad legacy row into a 500 on profile read. Validate
+    on the way in, trust on the way out.
+    """
+
+    title: str
+    url: str
+
+
 class UserSummary(BaseModel):
     """Compact shape for lists — followers, following, search results.
 
@@ -56,7 +69,7 @@ class UserProfile(BaseModel):
     avatar_url: str | None = None
     banner_url: str | None = None
     gender: str | None = None
-    links: list[dict] = Field(default_factory=list)
+    links: list[ProfileLinkOut] = Field(default_factory=list)
 
     followers_count: int = 0
     following_count: int = 0

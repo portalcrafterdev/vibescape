@@ -171,7 +171,13 @@ async def create_post(
     image_url: str | None,
     caption: str | None,
     media_asset_id=None,
+    hashtags: list[str] | None = None,
+    tagged_users: list[tuple[uuid.UUID, float | None, float | None]] | None = None,
 ) -> Post:
+    from app.services import hashtags as hashtag_service
+    from app.services import mentions as mention_service
+    from app.services import tags as tag_service
+
     post = Post(
         author_id=author.id,
         image_url=image_url,
@@ -180,6 +186,20 @@ async def create_post(
     )
     db.add(post)
 
+    # Flush, not commit: the post needs an id before its tags can reference it, but
+    # a post and its tags must land in one transaction. A failure while tagging an
+    # id that belongs to nobody rolls the post back too, rather than leaving a
+    # half-composed post behind.
+    await db.flush()
+
+    await hashtag_service.sync_for_post(db, post_id=post.id, caption=caption, explicit=hashtags)
+    await mention_service.sync_for_post(db, post_id=post.id, caption=caption)
+
+    if tagged_users:
+        await tag_service.set_for_post(db, post_id=post.id, wanted=tagged_users)
+
+    # Last, because a bulk update() expires the mapped Post and reading its
+    # attributes afterwards would raise MissingGreenlet.
     await db.execute(
         update(User).where(User.id == author.id).values(posts_count=User.posts_count + 1)
     )
@@ -196,16 +216,40 @@ async def create_post(
 
 
 async def update_post(
-    db: AsyncSession, *, actor: User, post_id: uuid.UUID, caption, pinned
+    db: AsyncSession,
+    *,
+    actor: User,
+    post_id: uuid.UUID,
+    caption,
+    pinned,
+    hashtags: list[str] | None = None,
+    tagged_users: list[tuple[uuid.UUID, float | None, float | None]] | None = None,
 ) -> Post:
+    from app.services import hashtags as hashtag_service
+    from app.services import mentions as mention_service
+    from app.services import tags as tag_service
+
     post = await get_post(db, post_id)
     if post.author_id != actor.id:
         raise PermissionDeniedError("You can only edit your own posts")
 
-    if caption is not ...:
+    caption_changed = caption is not ...
+    if caption_changed:
         post.caption = caption
     if pinned is not None:
         post.pinned = pinned
+
+    # A new caption re-derives its tags and mentions, so an edit cannot leave behind
+    # a hashtag the text no longer contains. Editing only `pinned` touches neither.
+    if caption_changed or hashtags is not None:
+        await hashtag_service.sync_for_post(
+            db, post_id=post.id, caption=post.caption, explicit=hashtags
+        )
+    if caption_changed:
+        await mention_service.sync_for_post(db, post_id=post.id, caption=post.caption)
+
+    if tagged_users is not None:
+        await tag_service.set_for_post(db, post_id=post.id, wanted=tagged_users)
 
     await db.commit()
     await db.refresh(post)
@@ -219,9 +263,15 @@ async def delete_post(db: AsyncSession, *, actor: User, post_id: uuid.UUID) -> N
     Ownership is checked here, not just at the route. Authentication says who the
     caller is; it does not say the row is theirs.
     """
+    from app.services import hashtags as hashtag_service
+
     post = await get_post(db, post_id)
     if post.author_id != actor.id:
         raise PermissionDeniedError("You can only delete your own posts")
+
+    # Before the delete: the join rows cascade away on their own, but a cascade
+    # cannot decrement hashtags.posts_count, so the counts have to come off first.
+    await hashtag_service.release_post(db, post_id)
 
     await db.delete(post)
     await db.execute(

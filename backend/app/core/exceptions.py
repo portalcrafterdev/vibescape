@@ -35,6 +35,19 @@ class PermissionDeniedError(AppError):
     message = "You do not have access to this resource"
 
 
+class ValidationError(AppError):
+    """A well-formed request whose contents do not make sense.
+
+    Distinct from the 422 that FastAPI raises for a body that fails its schema: this
+    is for values that only the database can judge, such as tagging a user id that
+    does not belong to anyone.
+    """
+
+    status_code = status.HTTP_400_BAD_REQUEST
+    code = "invalid_request"
+    message = "Request contents are not valid"
+
+
 def _envelope(code: str, message: str, details: object = None) -> dict:
     body: dict = {"error": {"code": code, "message": message}}
     if details is not None:

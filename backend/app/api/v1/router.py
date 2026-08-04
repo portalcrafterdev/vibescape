@@ -5,11 +5,13 @@ from app.api.v1 import (
     comments,
     docs,
     explore,
+    hashtags,
     health,
     media,
     messages,
     posts,
     reels,
+    search,
     stories,
     users,
     ws,
@@ -22,6 +24,8 @@ api_router.include_router(auth.router)
 api_router.include_router(users.router)
 api_router.include_router(posts.router)
 api_router.include_router(comments.router)
+api_router.include_router(hashtags.router)
+api_router.include_router(search.router)
 api_router.include_router(media.router)
 api_router.include_router(reels.router)
 api_router.include_router(stories.router)

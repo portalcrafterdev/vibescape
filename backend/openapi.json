@@ -1281,13 +1281,323 @@
         }
       }
     },
+    "/api/v1/users/{user_id}/tagged": {
+      "get": {
+        "tags": [
+          "posts"
+        ],
+        "summary": "List Tagged Posts",
+        "description": "Posts this user is tagged in \u2014 the third tab on a profile.",
+        "operationId": "list_tagged_posts_api_v1_users__user_id__tagged_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedGrid"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/posts/{post_id}/tags": {
+      "get": {
+        "tags": [
+          "posts"
+        ],
+        "summary": "List Post Tags",
+        "description": "People tagged in a post.",
+        "operationId": "list_post_tags_api_v1_posts__post_id__tags_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaggedUser"
+                  },
+                  "title": "Response List Post Tags Api V1 Posts  Post Id  Tags Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "posts"
+        ],
+        "summary": "Add Post Tag",
+        "description": "Tag someone in your own post. Tagging them again moves their marker.",
+        "operationId": "add_post_tag_api_v1_posts__post_id__tags_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Post Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddPostTagRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaggedUser"
+                  },
+                  "title": "Response Add Post Tag Api V1 Posts  Post Id  Tags Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/posts/{post_id}/tags/{user_id}": {
+      "delete": {
+        "tags": [
+          "posts"
+        ],
+        "summary": "Remove Post Tag",
+        "description": "Remove a tag.\n\nAllowed for the post's author and for the tagged person themselves \u2014 being\ntagged is something other people do to you, so you must be able to undo it.",
+        "operationId": "remove_post_tag_api_v1_posts__post_id__tags__user_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Post Id"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/mentions": {
+      "get": {
+        "tags": [
+          "posts"
+        ],
+        "summary": "List My Mentions",
+        "description": "Posts whose caption mentions you, newest first.",
+        "operationId": "list_my_mentions_api_v1_users_me_mentions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedPosts"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/posts/{post_id}/comments": {
       "post": {
         "tags": [
           "comments"
         ],
         "summary": "Create Comment",
-        "description": "Comment on a post.",
+        "description": "Comment on a post, or reply to a comment by sending `parent_id`.",
         "operationId": "create_comment_api_v1_posts__post_id__comments_post",
         "security": [
           {
@@ -1344,7 +1654,7 @@
           "comments"
         ],
         "summary": "List Comments",
-        "description": "Comments on a post, oldest first.",
+        "description": "Top-level comments on a post, oldest first.\n\nReplies are not interleaved here \u2014 each carries a `replies_count`, and the\nthread is fetched from `/comments/{id}/replies`. Mixing them in would let one\nbusy thread push every other comment off the first page.",
         "operationId": "list_comments_api_v1_posts__post_id__comments_get",
         "security": [
           {
@@ -1415,13 +1725,147 @@
         }
       }
     },
+    "/api/v1/comments/{comment_id}/replies": {
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Create Reply",
+        "description": "Reply to a comment.\n\nThreads stay one level deep: replying to a reply attaches to the same top-level\ncomment rather than nesting further.",
+        "operationId": "create_reply_api_v1_comments__comment_id__replies_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Comment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReplyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "List Replies",
+        "description": "Replies under one comment, oldest first.",
+        "operationId": "list_replies_api_v1_comments__comment_id__replies_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Comment Id"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedComments"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/comments/{comment_id}": {
       "delete": {
         "tags": [
           "comments"
         ],
         "summary": "Delete Comment",
-        "description": "Delete a comment.\n\nAllowed for the comment's author, and for the owner of the post it is on so they\ncan moderate their own content. Anyone else gets 403.",
+        "description": "Delete a comment.\n\nAllowed for the comment's author, and for the owner of the post it is on so they\ncan moderate their own content. Anyone else gets 403.\n\nDeleting a top-level comment takes its replies with it.",
         "operationId": "delete_comment_api_v1_comments__comment_id__delete",
         "security": [
           {
@@ -1443,6 +1887,258 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hashtags/search": {
+      "get": {
+        "tags": [
+          "hashtags"
+        ],
+        "summary": "Search Hashtags",
+        "description": "Type-ahead over tags. Prefix match, most used first.\n\nRegistered before `/hashtags/{tag}` so the literal path wins \u2014 otherwise\n\"search\" would be read as a tag name.",
+        "operationId": "search_hashtags_api_v1_hashtags_search_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "title": "Q"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HashtagOut"
+                  },
+                  "title": "Response Search Hashtags Api V1 Hashtags Search Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hashtags/{tag}": {
+      "get": {
+        "tags": [
+          "hashtags"
+        ],
+        "summary": "Read Hashtag",
+        "description": "One tag and how many posts carry it.",
+        "operationId": "read_hashtag_api_v1_hashtags__tag__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tag",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tag"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HashtagOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/hashtags/{tag}/posts": {
+      "get": {
+        "tags": [
+          "hashtags"
+        ],
+        "summary": "List Hashtag Posts",
+        "description": "Posts carrying a tag, newest first, as a grid.\n\nReturns an empty page rather than 404 for a tag nobody has used: a tag landing\npage reached by tapping text in a caption should show \"nothing here\", not an\nerror.",
+        "operationId": "list_hashtag_posts_api_v1_hashtags__tag__posts_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tag",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tag"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedGrid"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search",
+        "description": "People and hashtags matching one query.\n\nThe client has a single search box, so one call backs it rather than making the\nscreen fan out to two endpoints and stitch the results together.\n\nA leading \"#\" narrows the search to tags \u2014 that is what typing one means.",
+        "operationId": "search_api_v1_search_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60,
+              "title": "Q"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -2626,6 +3322,47 @@
   },
   "components": {
     "schemas": {
+      "AddPostTagRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "x": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X"
+          },
+          "y": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Y"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "AddPostTagRequest"
+      },
       "AuthResponse": {
         "properties": {
           "user": {
@@ -2665,6 +3402,30 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "replies_count": {
+            "type": "integer",
+            "title": "Replies Count",
+            "default": 0
+          },
+          "mentions": {
+            "items": {
+              "$ref": "#/components/schemas/PostAuthor"
+            },
+            "type": "array",
+            "title": "Mentions"
           },
           "can_delete": {
             "type": "boolean",
@@ -2769,6 +3530,18 @@
             "maxLength": 2200,
             "minLength": 1,
             "title": "Body"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
           }
         },
         "additionalProperties": false,
@@ -2852,6 +3625,36 @@
               }
             ],
             "title": "Caption"
+          },
+          "hashtags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 30
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hashtags"
+          },
+          "tagged_users": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PostTagInput"
+                },
+                "type": "array",
+                "maxItems": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tagged Users"
           }
         },
         "additionalProperties": false,
@@ -2913,6 +3716,23 @@
         "additionalProperties": false,
         "type": "object",
         "title": "CreateReelRequest"
+      },
+      "CreateReplyRequest": {
+        "properties": {
+          "body": {
+            "type": "string",
+            "maxLength": 2200,
+            "minLength": 1,
+            "title": "Body"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "title": "CreateReplyRequest",
+        "description": "Body for POST /comments/{id}/replies \u2014 the parent comes from the path."
       },
       "CreateStoryRequest": {
         "properties": {
@@ -3035,6 +3855,24 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HashtagOut": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "posts_count": {
+            "type": "integer",
+            "title": "Posts Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag"
+        ],
+        "title": "HashtagOut"
       },
       "HealthResponse": {
         "properties": {
@@ -3379,8 +4217,7 @@
           },
           "links": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/ProfileLinkOut"
             },
             "type": "array",
             "title": "Links"
@@ -3757,6 +4594,27 @@
             "format": "date-time",
             "title": "Created At"
           },
+          "hashtags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Hashtags"
+          },
+          "tagged_users": {
+            "items": {
+              "$ref": "#/components/schemas/TaggedUser"
+            },
+            "type": "array",
+            "title": "Tagged Users"
+          },
+          "mentions": {
+            "items": {
+              "$ref": "#/components/schemas/PostAuthor"
+            },
+            "type": "array",
+            "title": "Mentions"
+          },
           "is_liked": {
             "type": "boolean",
             "title": "Is Liked",
@@ -3776,6 +4634,47 @@
         ],
         "title": "PostOut",
         "description": "A feed post.\n\n`created_at` is ISO-8601 rather than the mock's pre-formatted \"2 hours ago\"\n(PRD 7.8): relative time depends on when it is read, not when it was sent, and\na cached string goes stale immediately. Counts are numbers, per PRD 7.9."
+      },
+      "PostTagInput": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "x": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X"
+          },
+          "y": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Y"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "PostTagInput"
       },
       "ProfileLink": {
         "properties": {
@@ -3799,6 +4698,25 @@
           "url"
         ],
         "title": "ProfileLink"
+      },
+      "ProfileLinkOut": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "url"
+        ],
+        "title": "ProfileLinkOut",
+        "description": "A profile link on the way out.\n\n`url` is a plain str, not HttpUrl, on purpose. The write side above validates\nwith HttpUrl, so nothing malformed gets stored \u2014 but a *response* model that\nre-validates would turn one bad legacy row into a 500 on profile read. Validate\non the way in, trust on the way out."
       },
       "ReelLikeResponse": {
         "properties": {
@@ -3960,6 +4878,27 @@
         ],
         "title": "ResetPasswordRequest"
       },
+      "SearchResponse": {
+        "properties": {
+          "users": {
+            "items": {
+              "$ref": "#/components/schemas/UserSummary"
+            },
+            "type": "array",
+            "title": "Users"
+          },
+          "hashtags": {
+            "items": {
+              "$ref": "#/components/schemas/HashtagOut"
+            },
+            "type": "array",
+            "title": "Hashtags"
+          }
+        },
+        "type": "object",
+        "title": "SearchResponse",
+        "description": "One call behind the single search box in the client.\n\nThe design has one field, not a tabbed people/tags search, so making the client\nfan out to two endpoints and stitch the results would push work up for no gain."
+      },
       "SendMessageRequest": {
         "properties": {
           "body": {
@@ -4071,6 +5010,70 @@
         "title": "StoryTray",
         "description": "One row per author, which is how the tray is actually drawn.\n\nA flat list of stories would make the client group them; the mock shows one\ncircle per person, so the grouping belongs here."
       },
+      "TaggedUser": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X"
+          },
+          "y": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Y"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username"
+        ],
+        "title": "TaggedUser",
+        "description": "Someone tagged in the picture, with where the tag sits on it.\n\nx and y are 0..1 fractions of width and height, not pixels \u2014 the client renders\nthe same image at whatever size the device gives it. Null when the tag was added\nwithout a position."
+      },
       "TokenPair": {
         "properties": {
           "access_token": {
@@ -4137,6 +5140,36 @@
               }
             ],
             "title": "Pinned"
+          },
+          "hashtags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 30
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hashtags"
+          },
+          "tagged_users": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PostTagInput"
+                },
+                "type": "array",
+                "maxItems": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tagged Users"
           }
         },
         "additionalProperties": false,
@@ -4468,8 +5501,7 @@
           },
           "links": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/ProfileLinkOut"
             },
             "type": "array",
             "title": "Links"

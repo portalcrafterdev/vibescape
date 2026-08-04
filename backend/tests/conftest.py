@@ -11,11 +11,14 @@ from app.db.session import SessionLocal
 from app.main import app
 from app.models.comment import Comment
 from app.models.follow import Follow
+from app.models.hashtag import Hashtag, PostHashtag
 from app.models.media import MediaAsset
+from app.models.mention import Mention
 from app.models.message import Conversation, ConversationParticipant, Message
 from app.models.post import Post, PostLike
 from app.models.reel import Reel, ReelLike
 from app.models.story import Highlight, HighlightItem, Story
+from app.models.tag import PostTag
 from app.models.token import PasswordResetToken, RefreshToken
 from app.models.user import User
 
@@ -80,8 +83,15 @@ async def clean_state() -> AsyncGenerator[None, None]:
         await session.execute(delete(Story))
         await session.execute(delete(ReelLike))
         await session.execute(delete(Reel))
+        await session.execute(delete(Mention))
         await session.execute(delete(Comment))
         await session.execute(delete(PostLike))
+        await session.execute(delete(PostTag))
+        await session.execute(delete(PostHashtag))
+        # Hashtags outlive the posts that used them — nothing cascades them away, so
+        # without this a tag written by one test would still be there, with a stale
+        # posts_count, for the next one that searches.
+        await session.execute(delete(Hashtag))
         await session.execute(delete(Post))
         await session.execute(delete(MediaAsset))
         await session.execute(delete(Follow))
