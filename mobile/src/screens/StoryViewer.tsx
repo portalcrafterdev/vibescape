@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Video from 'react-native-video';
 import { X, Trash2, Send } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -28,6 +29,16 @@ import {
 } from '../../api/authApi';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'StoryViewer'>;
+
+// Cloudinary puts the kind of file in the address, and the ending is there
+// for anything that does not.
+const isVideo = (url?: string) => {
+  if (!url) return false;
+
+  return (
+    url.includes('/video/') || /\.(mp4|mov|m4v|webm)(\?|$)/i.test(url)
+  );
+};
 
 // How long one story stays up before the next one comes in.
 const DURATION = 15000;
@@ -196,7 +207,19 @@ const StoryViewer = ({ route, navigation }: Props) => {
         </View>
       ) : (
         <View style={styles.viewer}>
-          <Image source={{ uri: story.image_url }} style={styles.image} />
+          {/* A story can be a clip as well as a picture, and the address is
+              the only way to tell them apart. */}
+          {isVideo(story.image_url) ? (
+            <Video
+              source={{ uri: story.image_url }}
+              style={styles.image}
+              resizeMode="contain"
+              repeat
+              paused={paused}
+            />
+          ) : (
+            <Image source={{ uri: story.image_url }} style={styles.image} />
+          )}
 
           {/* Tap areas sit on top of the picture */}
           <TouchableOpacity style={styles.leftTap} onPress={goBack} />

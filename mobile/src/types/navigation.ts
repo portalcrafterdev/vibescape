@@ -22,6 +22,8 @@ export type RootStackParamList = {
   Comments: { postId: string; onChange?: (delta: number) => void };
   // One post on its own, opened from a profile grid tile.
   Post: { postId: string };
+  // The gallery of photos and videos to put up as a story.
+  AddStory: undefined;
   // The profile hands over the reels it already has, and which one was tapped.
   ReelViewer: { reels: ReelOut[]; index: number };
   // Without the leading #, so it can go straight into the URL.

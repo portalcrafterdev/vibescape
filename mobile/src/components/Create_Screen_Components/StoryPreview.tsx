@@ -8,29 +8,46 @@ import {
   ActivityIndicator,
 } from "react-native";
 
+import Video from "react-native-video";
 import { ArrowLeft, ArrowRight, CircleUser } from "lucide-react-native";
 
 interface previewprops {
   uri: string;
+  /** A clip plays here, a picture is just shown. */
+  video?: boolean;
   onBack: () => void;
   onShare: () => void;
   busy?: boolean;
 }
 
-const StoryPreview = ({ uri, onBack, onShare, busy }: previewprops) => {
+const StoryPreview = ({ uri, video, onBack, onShare, busy }: previewprops) => {
   return (
     <View style={styles.container}>
-      <Image source={{ uri }} style={styles.image} resizeMode="contain" />
+      {video ? (
+        <Video
+          source={{ uri }}
+          style={styles.image}
+          resizeMode="contain"
+          repeat
+        />
+      ) : (
+        <Image source={{ uri }} style={styles.image} resizeMode="contain" />
+      )}
 
       <TouchableOpacity style={styles.backButton} onPress={onBack}>
         <ArrowLeft size={26} color="#fff" />
       </TouchableOpacity>
 
       <View style={styles.bottomRow}>
-        <View style={styles.audience}>
+        {/* The pill sends it too, so either side of the bar works. */}
+        <TouchableOpacity
+          style={styles.audience}
+          onPress={onShare}
+          disabled={busy}
+        >
           <CircleUser size={20} color="#fff" />
           <Text style={styles.audienceText}>Your story</Text>
-        </View>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.sendButton}

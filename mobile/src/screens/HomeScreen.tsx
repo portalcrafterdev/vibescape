@@ -6,25 +6,19 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
-  Alert,
 } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
-import { PhotoIdentifier } from '@react-native-camera-roll/camera-roll';
 
 import StoryItem from '../components/storyItem';
 import PostCard from '../components/PostCard';
-import PhotoPickerModal from '../components/PhotoPickerModal';
 
 import { useProfile } from '../context/ProfileContext';
 import { useStories } from '../context/StoryContext';
-import { toUploadable } from '../utils/photo';
-import { uploadImage } from '../../api/media';
 
 import {
   getFeed,
   getUserStories,
-  createStory,
   PostOut,
   StoryOut,
   StoryTray,
@@ -48,8 +42,6 @@ const HomeScreen = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [showPicker, setShowPicker] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
   const loadFeed = async (nextCursor: string | null) => {
     try {
@@ -114,31 +106,6 @@ const HomeScreen = () => {
     setLoadingMore(false);
   };
 
-  // Uploading a picture and turning it into a story.
-  const handleAddStory = async (photo: PhotoIdentifier) => {
-    setShowPicker(false);
-    setUploading(true);
-
-    try {
-      const file = await toUploadable(photo);
-      const asset = await uploadImage(file);
-
-      // The asset id alone comes back with an empty picture, so the address
-      // of the uploaded file goes with it.
-      const story = await createStory({
-        media_asset_id: asset.asset_id,
-        image_url: asset.url,
-      });
-
-      // Show it straight away instead of waiting for a reload.
-      setMyStories([story, ...myStories]);
-    } catch (error: any) {
-      Alert.alert('Could not add story', error?.message ?? 'Please try again.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
   const openStory = (story: StoryTray) => {
     navigation.push('StoryViewer', {
       userId: story.author.id,
@@ -182,7 +149,6 @@ const HomeScreen = () => {
           isMe
           hasStory={hasMyStory}
           seen={ringFor(user?.id, myLatest) === 'seen'}
-          loading={uploading}
           onPress={() => {
             if (hasMyStory && user) {
               navigation.push('StoryViewer', {
@@ -191,10 +157,10 @@ const HomeScreen = () => {
                 latestAt: myLatest,
               });
             } else {
-              setShowPicker(true);
+              navigation.push('AddStory');
             }
           }}
-          onAdd={() => setShowPicker(true)}
+          onAdd={() => navigation.push('AddStory')}
         />
       }
       renderItem={({ item }) => (
@@ -250,11 +216,6 @@ const HomeScreen = () => {
         }
       />
 
-      <PhotoPickerModal
-        visible={showPicker}
-        onClose={() => setShowPicker(false)}
-        onSelect={handleAddStory}
-      />
     </View>
   );
 };
