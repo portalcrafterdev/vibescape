@@ -65,7 +65,10 @@ const ReelViewerScreen = ({ route, navigation }: Props) => {
             isActive={item.id === activeId && isfocused}
             onDeleted={handleDeleted}
             onOpenComments={() =>
-              navigation.push('Comments', { postId: item.id })
+              navigation.push('Comments', {
+                postId: item.id,
+                mine: !!item.is_mine,
+              })
             }
             onBack={() => navigation.goBack()}
           />

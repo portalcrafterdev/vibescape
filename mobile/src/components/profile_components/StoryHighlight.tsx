@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { TouchableOpacity, View, FlatList, StyleSheet, Text , Image} from "react-native";
 
 import Plus from "lucide-react-native/icons/plus";
+import { useNavigation } from "@react-navigation/native";
 
 import { getUserHighlights, HighlightOut } from "../../../api/authApi";
 
@@ -11,32 +12,63 @@ interface highlightprops {
   reload?: number;
   // The New circle only belongs on the signed-in user's own profile.
   canAdd?: boolean;
+  // Whose profile this is, so the viewer can show them and be answered.
+  username?: string;
+  avatarUrl?: string | null;
 }
 
-const StoryHighlight = ({ userId, reload, canAdd }: highlightprops) => {
+const StoryHighlight = ({
+  userId,
+  reload,
+  canAdd,
+  username,
+  avatarUrl,
+}: highlightprops) => {
+  const navigation = useNavigation<any>();
+
   const [items, setItems] = useState<HighlightOut[]>([]);
 
+  const loadHighlights = async () => {
+    if (!userId) return;
+
+    try {
+      const response = await getUserHighlights(userId);
+      setItems(response);
+    } catch (error) {
+      console.log("Load highlights failed", error);
+    }
+  };
+
   useEffect(() => {
-    const loadHighlights = async () => {
-      if (!userId) return;
-
-      try {
-        const response = await getUserHighlights(userId);
-        setItems(response);
-      } catch (error) {
-        console.log("Load highlights failed", error);
-      }
-    };
-
     loadHighlights();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, reload]);
+
+  // Coming back from making one, or from deleting one, the strip is stale.
+  useEffect(() => {
+    return navigation.addListener("focus", loadHighlights);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation, userId]);
 
   // Someone else with no highlights gets no empty strip.
   if (!canAdd && items.length === 0) return null;
 
   const renderItem = ({ item }: { item: HighlightOut }) => (
     <View style={styles.item}>
-      <TouchableOpacity style={styles.highlightBorder}>
+      <TouchableOpacity
+        style={styles.highlightBorder}
+        onPress={() =>
+          navigation.push("HighlightViewer", {
+            highlightId: item.id,
+            title: item.title,
+            // Only my own can be deleted, so only mine shows the bin.
+            mine: !!canAdd,
+            userId,
+            username,
+            avatarUrl,
+          })
+        }
+      >
         <Image
           source={
             item.cover_url
@@ -69,7 +101,10 @@ return(
         ListHeaderComponent={
           canAdd ? (
             <View style={styles.item}>
-              <TouchableOpacity style={styles.newHighlight}>
+              <TouchableOpacity
+                style={styles.newHighlight}
+                onPress={() => navigation.push("NewHighlight")}
+              >
                 <Plus
                   color="#fff"
                   size={30}
@@ -134,9 +169,10 @@ const styles = StyleSheet.create({
 
   title: {
     color: '#fff',
-    fontSize: 15,
+    // Small enough that a whole name fits under the circle.
+    fontSize: 12,
     fontWeight: '500',
-    marginTop: 8,
+    marginTop: 6,
     width: 70,
     textAlign: 'center',
   },

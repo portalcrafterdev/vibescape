@@ -191,7 +191,11 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
             </View>
           )}
 
-          <StoryHighlight userId={user.id} />
+          <StoryHighlight
+            userId={user.id}
+            username={user.username}
+            avatarUrl={user.avatar_url}
+          />
 
           <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 

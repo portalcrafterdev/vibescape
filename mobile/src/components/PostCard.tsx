@@ -4,9 +4,11 @@ import {
   Text,
   Image,
   Modal,
+  ScrollView,
   StyleSheet,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  ActivityIndicator,
   Alert,
 } from 'react-native';
 
@@ -18,12 +20,14 @@ import {
   EllipsisVertical,
   Pencil,
   Trash2,
+  User,
 } from 'lucide-react-native';
 
 import { useNavigation } from '@react-navigation/native';
 
 import EditPost from './EditPost';
 import StoryAvatar from './StoryAvatar';
+import UserRow from './UserRow';
 import { useProfile } from '../context/ProfileContext';
 
 import {
@@ -31,8 +35,10 @@ import {
   unlikePost,
   deletePost,
   listComments,
+  getUserById,
   PostOut,
   CommentOut,
+  UserSummary,
 } from '../../api/authApi';
 
 interface Props {
@@ -107,6 +113,11 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
 
   // The first couple of comments, shown under the caption on a single post.
   const [preview, setPreview] = useState<CommentOut[]>([]);
+
+  // The list of who is in the picture, opened from the badge on it.
+  const [showTags, setShowTags] = useState(false);
+  const [people, setPeople] = useState<UserSummary[]>([]);
+  const [loadingTags, setLoadingTags] = useState(false);
 
   // The three dots sheet, and the screen for changing the post.
   const [menu, setMenu] = useState(false);
@@ -204,9 +215,35 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
     navigation.push('UserProfile', { userId: post.author.id });
   };
 
+  // The post only carries names and pictures for the people in it, not
+  // whether I follow them, so each one is looked up when the sheet opens.
+  const openTags = async () => {
+    setShowTags(true);
+
+    if (people.length > 0) return;
+
+    setLoadingTags(true);
+
+    try {
+      const found = await Promise.all(
+        (post.tagged_users ?? []).map((item) => getUserById(item.id)),
+      );
+
+      setPeople(found);
+    } catch (error) {
+      console.log('Load tagged people failed', error);
+
+      // Falling back to what the post already knows beats an empty sheet.
+      setPeople((post.tagged_users ?? []) as UserSummary[]);
+    } finally {
+      setLoadingTags(false);
+    }
+  };
+
   const openComments = () => {
     navigation.push('Comments', {
       postId: post.id,
+      mine: !!post.is_mine,
       onChange: (delta: number) => {
         setComments((old) => Math.max(0, old + delta));
 
@@ -260,6 +297,13 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
               <View style={styles.burstBox}>
                 <Heart size={100} color="#fff" fill="#fff" />
               </View>
+            )}
+
+            {/* The badge only appears when somebody is in the picture. */}
+            {!!post.tagged_users?.length && (
+              <TouchableOpacity style={styles.tagBadge} onPress={openTags}>
+                <User size={14} color="#fff" fill="#fff" />
+              </TouchableOpacity>
             )}
           </View>
         </TouchableWithoutFeedback>
@@ -358,6 +402,43 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
         {detail ? fullDate(post.created_at) : timeAgo(post.created_at)}
       </Text>
 
+      {/* Who is in the picture */}
+      <Modal
+        visible={showTags}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowTags(false)}
+      >
+        <TouchableOpacity
+          style={styles.backdrop}
+          activeOpacity={1}
+          onPress={() => setShowTags(false)}
+        />
+
+        <View style={styles.sheet}>
+          <View style={styles.handle} />
+
+          <Text style={styles.sheetTitle}>In this photo</Text>
+
+          {loadingTags ? (
+            <ActivityIndicator style={styles.sheetLoader} color="#fff" />
+          ) : (
+            <ScrollView>
+              {people.map((item) => (
+                <UserRow
+                  key={item.id}
+                  user={item}
+                  onPress={() => {
+                    setShowTags(false);
+                    navigation.push('UserProfile', { userId: item.id });
+                  }}
+                />
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </Modal>
+
       {/* The three dots sheet */}
       <Modal
         visible={menu}
@@ -447,6 +528,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#111',
   },
 
+  tagBadge: {
+    position: 'absolute',
+    left: 22,
+    bottom: 10,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#00000099',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  sheetTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+
+  sheetLoader: {
+    marginVertical: 30,
+  },
+
   burstBox: {
     position: 'absolute',
     top: 0,
@@ -519,6 +624,8 @@ const styles = StyleSheet.create({
   },
 
   sheet: {
+    // Enough people in a picture would otherwise run off the top.
+    maxHeight: '70%',
     backgroundColor: '#1c1c1c',
     borderTopLeftRadius: 14,
     borderTopRightRadius: 14,

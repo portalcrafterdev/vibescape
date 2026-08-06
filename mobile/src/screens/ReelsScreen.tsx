@@ -122,7 +122,10 @@ const ReelsScreen = () => {
             onDeleted={handleDeleted}
             onOpenComments={() => {
               fromComments.current = true;
-              navigation.push('Comments', { postId: item.id });
+              navigation.push('Comments', {
+                postId: item.id,
+                mine: !!item.is_mine,
+              });
             }}
           />
         )}

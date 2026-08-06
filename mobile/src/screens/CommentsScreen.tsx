@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  Image,
+  Modal,
   TextInput,
   FlatList,
   StyleSheet,
@@ -13,7 +13,19 @@ import {
   Alert,
 } from 'react-native';
 
-import { Trash2, Image as PhotoIcon, Sticker } from 'lucide-react-native';
+import {
+  Trash2,
+  Image as PhotoIcon,
+  Sticker,
+  Heart,
+  MoreVertical,
+  ChevronDown,
+  Pin,
+  Send,
+  EyeOff,
+  CircleAlert,
+  Ban,
+} from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types/navigation';
@@ -34,8 +46,22 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Comments'>;
 // The quick row above the box. Tapping one posts it as a comment.
 const emojis = ['❤️', '🙌', '🔥', '👏', '😢', '😍', '😮', '😂'];
 
+// "63w" beside the name, which is all the line has room for.
+const timeAgo = (date: string) => {
+  const minutes = Math.floor((Date.now() - new Date(date).getTime()) / 60000);
+
+  if (minutes < 60) return `${Math.max(minutes, 1)}m`;
+  if (minutes < 1440) return `${Math.floor(minutes / 60)}h`;
+
+  const days = Math.floor(minutes / 1440);
+
+  if (days < 7) return `${days}d`;
+
+  return `${Math.floor(days / 7)}w`;
+};
+
 const CommentsScreen = ({ route, navigation }: Props) => {
-  const { postId, onChange } = route.params;
+  const { postId, mine, onChange } = route.params;
   const { user } = useProfile();
 
   const [comments, setComments] = useState<CommentOut[]>([]);
@@ -53,7 +79,7 @@ const CommentsScreen = ({ route, navigation }: Props) => {
   // How much of the screen the keyboard is covering. The sheet sits in its
   // own window, where the usual keyboard handling does not reach it, so it
   // is measured and moved by hand.
-  const { height: screenHeight } = useWindowDimensions();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [keyboard, setKeyboard] = useState(0);
 
   useEffect(() => {
@@ -77,6 +103,20 @@ const CommentsScreen = ({ route, navigation }: Props) => {
     screenHeight * 0.68,
     screenHeight - keyboard - 40,
   );
+
+  // Held open on one comment by a long press, and where the finger was, so
+  // the menu opens beside that comment instead of in the middle of nowhere.
+  const [menuFor, setMenuFor] = useState<CommentOut | null>(null);
+  const [menuAt, setMenuAt] = useState({ x: 0, y: 0 });
+
+  // The API has no likes on comments and no way to hide one, so both are
+  // kept here. They last as long as the sheet is open.
+  const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+
+  const toggleLike = (id: string) => setLiked({ ...liked, [id]: !liked[id] });
+
+  const hide = (id: string) => setHidden({ ...hidden, [id]: true });
 
   // Set while answering someone, which sends a reply instead of a comment.
   const [replyTo, setReplyTo] = useState<CommentOut | null>(null);
@@ -208,8 +248,16 @@ const CommentsScreen = ({ route, navigation }: Props) => {
             setComments(comments.filter((item) => item.id !== comment.id));
 
             if (onChange) onChange(-1);
-          } catch (error) {
+          } catch (error: any) {
             console.log('Delete comment failed', error);
+
+            // The server has the final say on who may clear a comment.
+            Alert.alert(
+              'Could not delete',
+              error?.response?.status === 403
+                ? 'This comment is not yours to remove.'
+                : 'Please try again.',
+            );
           }
         },
       },
@@ -230,6 +278,19 @@ const CommentsScreen = ({ route, navigation }: Props) => {
       >
         <View style={styles.handle} />
 
+        <View style={styles.sheetHeader}>
+          <View style={styles.headerSide} />
+
+          <Text style={styles.sheetTitle}>Comments</Text>
+
+          <MoreVertical size={20} color="#fff" style={styles.headerSide} />
+        </View>
+
+        <View style={styles.filterRow}>
+          <Text style={styles.filterText}>For you</Text>
+          <ChevronDown size={16} color="#fff" />
+        </View>
+
         {loading ? (
           <ActivityIndicator style={styles.loader} color="#fff" />
         ) : comments.length === 0 ? (
@@ -245,7 +306,7 @@ const CommentsScreen = ({ route, navigation }: Props) => {
           </View>
         ) : (
           <FlatList
-            data={comments}
+            data={comments.filter((item) => !hidden[item.id])}
             keyExtractor={(item) => item.id}
             onEndReached={loadMore}
             onEndReachedThreshold={0.4}
@@ -253,7 +314,18 @@ const CommentsScreen = ({ route, navigation }: Props) => {
             contentContainerStyle={styles.listContent}
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
-              <View style={styles.row}>
+              // Holding a comment opens the menu, the way Instagram does it.
+              <TouchableOpacity
+                style={styles.row}
+                onLongPress={(event) => {
+                  setMenuAt({
+                    x: event.nativeEvent.pageX,
+                    y: event.nativeEvent.pageY,
+                  });
+                  setMenuFor(item);
+                }}
+                activeOpacity={1}
+              >
                 {/* The ring shows when they have a story to watch. */}
                 <StoryAvatar
                   userId={item.author.id}
@@ -269,7 +341,12 @@ const CommentsScreen = ({ route, navigation }: Props) => {
                 />
 
                 <View style={styles.body}>
-                  <Text style={styles.username}>{item.author.username}</Text>
+                  <View style={styles.nameLine}>
+                    <Text style={styles.username}>{item.author.username}</Text>
+
+                    <Text style={styles.age}>{timeAgo(item.created_at)}</Text>
+                  </View>
+
                   <Text style={styles.comment}>{item.body}</Text>
 
                   <View style={styles.actions}>
@@ -280,6 +357,10 @@ const CommentsScreen = ({ route, navigation }: Props) => {
                         <Text style={styles.action}>Reply</Text>
                       </TouchableOpacity>
                     )}
+
+                    <TouchableOpacity onPress={() => hide(item.id)}>
+                      <Text style={styles.action}>Hide</Text>
+                    </TouchableOpacity>
 
                     {!!item.replies_count && item.replies_count > 0 && (
                       <TouchableOpacity onPress={() => toggleReplies(item)}>
@@ -325,12 +406,20 @@ const CommentsScreen = ({ route, navigation }: Props) => {
                   )}
                 </View>
 
-                {item.can_delete && (
-                  <TouchableOpacity onPress={() => handleDelete(item)}>
-                    <Trash2 size={18} color="#8e8e93" />
-                  </TouchableOpacity>
-                )}
-              </View>
+                {/* The heart down the right hand side, with its count. */}
+                <TouchableOpacity
+                  style={styles.likeBox}
+                  onPress={() => toggleLike(item.id)}
+                >
+                  <Heart
+                    size={16}
+                    color={liked[item.id] ? '#ed4956' : '#8e8e93'}
+                    fill={liked[item.id] ? '#ed4956' : 'none'}
+                  />
+
+                  {liked[item.id] && <Text style={styles.likeCount}>1</Text>}
+                </TouchableOpacity>
+              </TouchableOpacity>
             )}
           />
         )}
@@ -357,13 +446,11 @@ const CommentsScreen = ({ route, navigation }: Props) => {
         )}
 
         <View style={styles.inputRow}>
-          <Image
-            source={
-              user?.avatar_url
-                ? { uri: user.avatar_url }
-                : require('../assets/images/Portelcrafterlogo.png')
-            }
-            style={styles.myAvatar}
+          <StoryAvatar
+            userId={user?.id}
+            username={user?.username}
+            avatarUrl={user?.avatar_url}
+            size={32}
           />
 
           <View style={styles.pill}>
@@ -394,6 +481,71 @@ const CommentsScreen = ({ route, navigation }: Props) => {
           </View>
         </View>
       </View>
+
+      {/* Held down on a comment */}
+      <Modal
+        visible={!!menuFor}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuFor(null)}
+      >
+        <TouchableOpacity
+          style={styles.menuBackdrop}
+          activeOpacity={1}
+          onPress={() => setMenuFor(null)}
+        >
+          {/* Kept on screen: never past the right edge, never so low that
+              the bottom of the menu falls off. */}
+          <View
+            style={[
+              styles.menu,
+              {
+                left: Math.min(Math.max(menuAt.x - 40, 12), screenWidth - 222),
+                top: Math.min(menuAt.y + 12, screenHeight - 380),
+              },
+            ]}
+          >
+            {[
+              { key: 'Pin', icon: Pin },
+              { key: 'Share', icon: Send },
+              { key: 'Restrict', icon: EyeOff },
+              { key: 'Report', icon: CircleAlert, red: true },
+              { key: 'Block', icon: Ban },
+            ].map((row) => (
+              <TouchableOpacity
+                key={row.key}
+                style={styles.menuRow}
+                onPress={() => {
+                  setMenuFor(null);
+                  Alert.alert(row.key, 'This one is not built yet.');
+                }}
+              >
+                <row.icon size={20} color={row.red ? '#ed4956' : '#fff'} />
+
+                <Text style={[styles.menuText, row.red && styles.menuRed]}>
+                  {row.key}
+                </Text>
+              </TouchableOpacity>
+            ))}
+
+            {/* Always here. The server turns down a comment that is not
+                mine to remove, and says so. */}
+            <TouchableOpacity
+              style={styles.menuRow}
+              onPress={() => {
+                const target = menuFor;
+                setMenuFor(null);
+
+                if (target) handleDelete(target);
+              }}
+            >
+              <Trash2 size={20} color="#ed4956" />
+
+              <Text style={[styles.menuText, styles.menuRed]}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -415,6 +567,93 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 14,
     borderTopRightRadius: 14,
     paddingBottom: 10,
+  },
+
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+  },
+
+  sheetTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  headerSide: {
+    width: 20,
+  },
+
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+
+  filterText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  nameLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  age: {
+    color: '#8e8e93',
+    fontSize: 12,
+  },
+
+  likeBox: {
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingTop: 2,
+  },
+
+  likeCount: {
+    color: '#8e8e93',
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  menuBackdrop: {
+    flex: 1,
+    backgroundColor: '#00000088',
+  },
+
+  menu: {
+    position: 'absolute',
+    width: 210,
+    borderRadius: 14,
+    backgroundColor: '#262626',
+    paddingVertical: 6,
+    // Lifts it off the dimmed sheet behind.
+    elevation: 8,
+  },
+
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+  },
+
+  menuText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+
+  menuRed: {
+    color: '#ed4956',
   },
 
   handle: {

@@ -19,11 +19,28 @@ export type RootStackParamList = {
   // latestAt is the time of their newest story, saved once it is watched.
   StoryViewer: { userId: string; username?: string; latestAt?: string };
   // onChange lets the post keep its comment count right without reloading.
-  Comments: { postId: string; onChange?: (delta: number) => void };
+  // mine says the post belongs to me, so I can clear anyone's comment off it.
+  Comments: {
+    postId: string;
+    mine?: boolean;
+    onChange?: (delta: number) => void;
+  };
   // One post on its own, opened from a profile grid tile.
   Post: { postId: string };
   // The gallery of photos and videos to put up as a story.
   AddStory: undefined;
+  // Picking stories to keep, then naming them.
+  NewHighlight: undefined;
+  // mine decides whether the bin and the owner's bar show. userId is whose
+  // profile it sits on, so a reply can be sent to them.
+  HighlightViewer: {
+    highlightId: string;
+    title?: string;
+    mine?: boolean;
+    userId?: string;
+    username?: string;
+    avatarUrl?: string | null;
+  };
   // The profile hands over the reels it already has, and which one was tapped.
   ReelViewer: { reels: ReelOut[]; index: number };
   // Without the leading #, so it can go straight into the URL.

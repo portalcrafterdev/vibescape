@@ -23,6 +23,8 @@ import HashtagScreen from '../screens/HashtagScreen';
 import ChatScreen from '../screens/ChatScreen';
 import PostScreen from '../screens/PostScreen';
 import AddStoryScreen from '../screens/AddStoryScreen';
+import NewHighlightScreen from '../screens/NewHighlightScreen';
+import HighlightViewer from '../screens/HighlightViewer';
 
 const {Navigator , Screen} = createNativeStackNavigator<RootStackParamList>();
 
@@ -114,6 +116,14 @@ const AuthStack = () => {
     <Screen
     name='AddStory'
     component= {AddStoryScreen}/>
+
+    <Screen
+    name='NewHighlight'
+    component= {NewHighlightScreen}/>
+
+    <Screen
+    name='HighlightViewer'
+    component= {HighlightViewer}/>
 
     {/* A see through sheet so the reel or the post stays visible behind it. */}
     <Screen
