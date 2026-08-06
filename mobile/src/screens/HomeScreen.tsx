@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { PhotoIdentifier } from '@react-native-camera-roll/camera-roll';
 
@@ -37,6 +38,7 @@ const HomeScreen = () => {
   const [posts, setPosts] = useState<PostOut[]>([]);
   const [stories, setStories] = useState<StoryTray[]>([]);
   const [myStories, setMyStories] = useState<StoryOut[]>([]);
+  const [seen, setSeen] = useState<Record<string, string>>({});
 
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
@@ -72,6 +74,25 @@ const HomeScreen = () => {
     }
   };
 
+  // Which rings are already watched. The API has no seen flag, so the story
+  // viewer writes this and we read it back here.
+  const loadSeen = async () => {
+    const saved = await AsyncStorage.getItem('seenStories');
+    setSeen(saved ? JSON.parse(saved) : {});
+  };
+
+  // Grey once the newest story of theirs is older than what we watched. My
+  // own bubble goes through here too, so it greys the same way.
+  const isSeen = (authorId?: string, latest?: string | null) => {
+    if (!authorId || !latest) return false;
+
+    const watched = seen[authorId];
+
+    if (!watched) return false;
+
+    return new Date(watched).getTime() >= new Date(latest).getTime();
+  };
+
   // Our own bubble comes from here, not the tray. The tray may leave our own
   // story out, and then we would never be able to open it.
   const loadMyStories = async () => {
@@ -88,6 +109,7 @@ const HomeScreen = () => {
   useEffect(() => {
     loadFeed(null);
     loadStories();
+    loadSeen();
   }, []);
 
   useEffect(() => {
@@ -97,7 +119,12 @@ const HomeScreen = () => {
 
   // Coming back from the story viewer, where one may have been deleted.
   useEffect(() => {
-    return navigation.addListener('focus', loadMyStories);
+    return navigation.addListener('focus', () => {
+      loadMyStories();
+
+      // Coming back from a story means a ring may now be grey.
+      loadSeen();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigation, user?.id]);
 
@@ -127,8 +154,12 @@ const HomeScreen = () => {
       const file = await toUploadable(photo);
       const asset = await uploadImage(file);
 
-      // The story keeps the asset id, so the API works out the picture itself.
-      const story = await createStory({ media_asset_id: asset.asset_id });
+      // The asset id alone comes back with an empty picture, so the address
+      // of the uploaded file goes with it.
+      const story = await createStory({
+        media_asset_id: asset.asset_id,
+        image_url: asset.url,
+      });
 
       // Show it straight away instead of waiting for a reload.
       setMyStories([story, ...myStories]);
@@ -143,6 +174,8 @@ const HomeScreen = () => {
     navigation.push('StoryViewer', {
       userId: story.author.id,
       username: story.author.username,
+      // The viewer saves this back, so both screens compare the same time.
+      latestAt: story.latest_at,
     });
   };
 
@@ -153,6 +186,16 @@ const HomeScreen = () => {
   );
 
   const hasMyStory = myStories.length > 0;
+
+  // The time of my newest story. The list order is not promised, so pick the
+  // largest one rather than the first or the last.
+  let myLatest = '';
+
+  myStories.forEach((item) => {
+    if (!myLatest || new Date(item.created_at) > new Date(myLatest)) {
+      myLatest = item.created_at;
+    }
+  });
 
   const storyHeader = (
     <FlatList
@@ -169,12 +212,14 @@ const HomeScreen = () => {
           imageUrl={user?.avatar_url}
           isMe
           hasStory={hasMyStory}
+          seen={isSeen(user?.id, myLatest)}
           loading={uploading}
           onPress={() => {
             if (hasMyStory && user) {
               navigation.push('StoryViewer', {
                 userId: user.id,
                 username: user.username,
+                latestAt: myLatest,
               });
             } else {
               setShowPicker(true);
@@ -189,6 +234,7 @@ const HomeScreen = () => {
           // || not ??, so an empty text from the API still falls back.
           imageUrl={item.author.avatar_url || item.preview_url}
           hasStory
+          seen={isSeen(item.author.id, item.latest_at)}
           onPress={() => openStory(item)}
         />
       )}

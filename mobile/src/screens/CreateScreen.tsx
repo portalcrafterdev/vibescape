@@ -11,12 +11,23 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
+  Switch,
   Linking,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { ChevronDown } from "lucide-react-native";
+import {
+  ChevronDown,
+  ChevronRight,
+  UserPlus,
+  Check,
+  Music,
+  MapPin,
+  Sparkles,
+  BarChart3,
+  MessageCircle,
+} from "lucide-react-native";
 import {
   CameraRoll,
   Album,
@@ -35,7 +46,13 @@ import Video from "react-native-video";
 import { requestPhotoAccess } from "../utils/photoPermission";
 import { toUploadable } from "../utils/photo";
 import { uploadImage } from "../../api/media";
-import { createPost, createStory, createReel } from "../../api/authApi";
+import {
+  createPost,
+  createStory,
+  createReel,
+  searchUsers,
+  UserSummary,
+} from "../../api/authApi";
 
 const CreateScreen = ()=>{
     const navigation = useNavigation<any>();
@@ -81,6 +98,29 @@ const CreateScreen = ()=>{
     // A picture taken in the app for a post, rather than picked.
     const [capturedUri, setCapturedUri] = useState<string | null>(null);
     const [caption, setCaption] = useState("");
+
+    // People tagged in the post, chosen on the caption step.
+    const [tagged, setTagged] = useState<UserSummary[]>([]);
+    const [showTags, setShowTags] = useState(false);
+    const [tagQuery, setTagQuery] = useState("");
+    const [tagResults, setTagResults] = useState<UserSummary[]>([]);
+    const [tagSearching, setTagSearching] = useState(false);
+
+    // The API takes none of these yet, so they are only held on the screen.
+    // Once the fields exist they go straight into the createPost call.
+    const [poll, setPoll] = useState("");
+    const [prompt, setPrompt] = useState("");
+    const [showPoll, setShowPoll] = useState(false);
+    const [showPrompt, setShowPrompt] = useState(false);
+    const [audio, setAudio] = useState("");
+    const [location, setLocation] = useState("");
+    const [aiLabel, setAiLabel] = useState(false);
+
+    // Audio and location are both a name typed into the same little sheet,
+    // so one is enough. Empty means nothing is open.
+    const [sheet, setSheet] = useState("");
+    const [sheetText, setSheetText] = useState("");
+
     const [fit, setFit] = useState<"cover" | "contain">("cover");
     const [sharing, setSharing] = useState(false);
 
@@ -140,6 +180,55 @@ const CreateScreen = ()=>{
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode, album]);
+
+    // Look people up a moment after typing stops, not on every key.
+    useEffect(() => {
+      const text = tagQuery.trim();
+
+      if (!text) {
+        setTagResults([]);
+        return;
+      }
+
+      setTagSearching(true);
+
+      const timer = setTimeout(async () => {
+        try {
+          setTagResults(await searchUsers(text, 20));
+        } catch (error) {
+          console.log("Search people failed", error);
+          setTagResults([]);
+        } finally {
+          setTagSearching(false);
+        }
+      }, 350);
+
+      return () => clearTimeout(timer);
+    }, [tagQuery]);
+
+    const openSheet = (kind: string) => {
+      setSheet(kind);
+      setSheetText(kind === "audio" ? audio : location);
+    };
+
+    const saveSheet = () => {
+      if (sheet === "audio") {
+        setAudio(sheetText.trim());
+      } else {
+        setLocation(sheetText.trim());
+      }
+
+      setSheet("");
+    };
+
+    // Tapping someone already tagged takes them off again.
+    const toggleTag = (person: UserSummary) => {
+      if (tagged.some((item) => item.id === person.id)) {
+        setTagged(tagged.filter((item) => item.id !== person.id));
+      } else {
+        setTagged([...tagged, person]);
+      }
+    };
 
     // The guard stops a fast scroll asking for the same page twice.
     const loadMore = async () => {
@@ -220,7 +309,10 @@ const CreateScreen = ()=>{
 
         const asset = await uploadImage(file);
 
-        await createStory({ media_asset_id: asset.asset_id });
+        await createStory({
+          media_asset_id: asset.asset_id,
+          image_url: asset.url,
+        });
 
         Alert.alert("Shared", "Your story is live.");
         navigation.goBack();
@@ -258,6 +350,10 @@ const CreateScreen = ()=>{
         if (mode === "REEL") {
           await createReel({
             media_asset_id: asset.asset_id,
+            // The API sends nothing back when it is only given the asset id,
+            // so the address of the file goes with it, the way the profile
+            // picture is already saved.
+            video_url: asset.url,
             caption: caption.trim() || null,
           });
         } else {
@@ -269,8 +365,14 @@ const CreateScreen = ()=>{
 
           await createPost({
             media_asset_id: asset.asset_id,
+            image_url: asset.url,
             caption: caption.trim() || null,
             hashtags: tags,
+            // No x and y, because the people are picked from a list rather
+            // than placed on the picture.
+            tagged_users: tagged.map((item) => ({ user_id: item.id })),
+            // Once the API takes them, audio, location, poll, prompt and
+            // aiLabel go here as well. They are already held on the screen.
           });
         }
 
@@ -328,6 +430,113 @@ const CreateScreen = ()=>{
               style={styles.captionInput}
               multiline
             />
+
+            {/* Poll and prompt sit as chips, the way Instagram shows them. */}
+            <View style={styles.chipRow}>
+              <TouchableOpacity
+                style={[styles.chip, showPoll && styles.chipOn]}
+                onPress={() => setShowPoll(!showPoll)}
+              >
+                <BarChart3 size={16} color="#fff" />
+                <Text style={styles.chipText}>Poll</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.chip, showPrompt && styles.chipOn]}
+                onPress={() => setShowPrompt(!showPrompt)}
+              >
+                <MessageCircle size={16} color="#fff" />
+                <Text style={styles.chipText}>Prompt</Text>
+              </TouchableOpacity>
+            </View>
+
+            {showPoll && (
+              <TextInput
+                value={poll}
+                onChangeText={setPoll}
+                placeholder="Ask a question..."
+                placeholderTextColor="#777"
+                style={styles.chipInput}
+              />
+            )}
+
+            {showPrompt && (
+              <TextInput
+                value={prompt}
+                onChangeText={setPrompt}
+                placeholder="Add a prompt..."
+                placeholderTextColor="#777"
+                style={styles.chipInput}
+              />
+            )}
+
+            <TouchableOpacity
+              style={styles.optionRow}
+              onPress={() => openSheet("audio")}
+            >
+              <Music size={22} color="#fff" />
+
+              <Text style={styles.optionText}>Add audio</Text>
+
+              <Text style={styles.optionValue} numberOfLines={1}>
+                {audio}
+              </Text>
+
+              <ChevronRight size={20} color="#8e8e93" />
+            </TouchableOpacity>
+
+            {/* Only a post can carry people. The reel API has no room for it. */}
+            {mode === "POST" && (
+              <TouchableOpacity
+                style={styles.optionRow}
+                onPress={() => setShowTags(true)}
+              >
+                <UserPlus size={22} color="#fff" />
+
+                <Text style={styles.optionText}>Tag people</Text>
+
+                <Text style={styles.optionValue} numberOfLines={1}>
+                  {tagged.map((item) => item.username).join(", ")}
+                </Text>
+
+                <ChevronRight size={20} color="#8e8e93" />
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.optionRow}
+              onPress={() => openSheet("location")}
+            >
+              <MapPin size={22} color="#fff" />
+
+              <Text style={styles.optionText}>Add location</Text>
+
+              <Text style={styles.optionValue} numberOfLines={1}>
+                {location}
+              </Text>
+
+              <ChevronRight size={20} color="#8e8e93" />
+            </TouchableOpacity>
+
+            <Text style={styles.optionNote}>
+              People that you share this content with can see the location that
+              you tag and view this content on the map.
+            </Text>
+
+            <View style={styles.optionRow}>
+              <Sparkles size={22} color="#fff" />
+
+              <Text style={styles.optionText}>Add AI label</Text>
+
+              <View style={styles.optionValue} />
+
+              <Switch
+                value={aiLabel}
+                onValueChange={setAiLabel}
+                trackColor={{ false: "#3a3a3a", true: "#4A5BE8" }}
+                thumbColor="#fff"
+              />
+            </View>
           </ScrollView>
 
           <TouchableOpacity
@@ -341,6 +550,110 @@ const CreateScreen = ()=>{
               <Text style={styles.shareText}>Share</Text>
             )}
           </TouchableOpacity>
+
+          {/* Audio and location, both just a name for now */}
+          <Modal
+            visible={!!sheet}
+            animationType="slide"
+            onRequestClose={() => setSheet("")}
+          >
+            <SafeAreaView style={styles.container}>
+              <CreateHeader
+                title={sheet === "audio" ? "Add audio" : "Add location"}
+                actionText="Done"
+                onAction={saveSheet}
+                onClose={() => setSheet("")}
+              />
+
+              <TextInput
+                value={sheetText}
+                onChangeText={setSheetText}
+                placeholder={
+                  sheet === "audio" ? "Song name" : "Where was this?"
+                }
+                placeholderTextColor="#777"
+                style={styles.tagSearch}
+                autoFocus
+              />
+            </SafeAreaView>
+          </Modal>
+
+          {/* People picker */}
+          <Modal
+            visible={showTags}
+            animationType="slide"
+            onRequestClose={() => setShowTags(false)}
+          >
+            <SafeAreaView style={styles.container}>
+              <CreateHeader
+                title="Tag people"
+                actionText="Done"
+                onAction={() => setShowTags(false)}
+                onClose={() => setShowTags(false)}
+              />
+
+              <TextInput
+                value={tagQuery}
+                onChangeText={setTagQuery}
+                placeholder="Search"
+                placeholderTextColor="#777"
+                style={styles.tagSearch}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+
+              {tagSearching ? (
+                <ActivityIndicator style={styles.loader} color="#fff" />
+              ) : (
+                <FlatList
+                  // Whoever is already tagged stays on top, so they can be
+                  // taken off again without searching for them a second time.
+                  data={[
+                    ...tagged,
+                    ...tagResults.filter(
+                      (item) => !tagged.some((person) => person.id === item.id),
+                    ),
+                  ]}
+                  keyExtractor={(item) => item.id}
+                  keyboardShouldPersistTaps="handled"
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.personRow}
+                      onPress={() => toggleTag(item)}
+                    >
+                      <Image
+                        source={
+                          item.avatar_url
+                            ? { uri: item.avatar_url }
+                            : require("../assets/images/Portelcrafterlogo.png")
+                        }
+                        style={styles.personAvatar}
+                      />
+
+                      <View style={styles.personNames}>
+                        <Text style={styles.personName}>{item.username}</Text>
+
+                        {!!item.display_name && (
+                          <Text style={styles.personFull}>
+                            {item.display_name}
+                          </Text>
+                        )}
+                      </View>
+
+                      {tagged.some((person) => person.id === item.id) && (
+                        <Check size={20} color="#0095F6" />
+                      )}
+                    </TouchableOpacity>
+                  )}
+                  ListEmptyComponent={
+                    tagQuery.trim() ? (
+                      <Text style={styles.message}>Nobody found.</Text>
+                    ) : null
+                  }
+                />
+              )}
+            </SafeAreaView>
+          </Modal>
         </SafeAreaView>
       );
     }
@@ -581,6 +894,119 @@ const styles = StyleSheet.create({
   marginHorizontal: 20,
   minHeight: 80,
   textAlignVertical: "top",
+ },
+
+ chipRow: {
+  flexDirection: "row",
+  gap: 10,
+  marginTop: 20,
+  marginBottom: 6,
+  paddingHorizontal: 20,
+ },
+
+ chip: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 6,
+  paddingHorizontal: 14,
+  height: 34,
+  borderRadius: 17,
+  backgroundColor: "#262626",
+ },
+
+ chipOn: {
+  backgroundColor: "#4A5BE8",
+ },
+
+ chipText: {
+  color: "#fff",
+  fontSize: 14,
+  fontWeight: "600",
+ },
+
+ chipInput: {
+  color: "#fff",
+  fontSize: 15,
+  marginHorizontal: 20,
+  marginBottom: 10,
+  paddingHorizontal: 14,
+  height: 44,
+  borderRadius: 10,
+  backgroundColor: "#161616",
+ },
+
+ optionNote: {
+  color: "#8e8e93",
+  fontSize: 12,
+  lineHeight: 16,
+  paddingHorizontal: 20,
+  marginTop: -6,
+  marginBottom: 4,
+ },
+
+ optionRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 14,
+  paddingHorizontal: 20,
+  paddingVertical: 16,
+  borderTopWidth: 0.5,
+  borderTopColor: "#262626",
+ },
+
+ optionText: {
+  color: "#fff",
+  fontSize: 16,
+ },
+
+ optionValue: {
+  flex: 1,
+  color: "#8e8e93",
+  fontSize: 14,
+  textAlign: "right",
+ },
+
+ tagSearch: {
+  color: "#fff",
+  fontSize: 15,
+  backgroundColor: "#262626",
+  marginHorizontal: 16,
+  marginTop: 6,
+  marginBottom: 10,
+  paddingHorizontal: 14,
+  height: 42,
+  borderRadius: 12,
+ },
+
+ personRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 16,
+  paddingVertical: 10,
+ },
+
+ personAvatar: {
+  width: 44,
+  height: 44,
+  borderRadius: 22,
+  backgroundColor: "#262626",
+ },
+
+ personNames: {
+  flex: 1,
+  marginLeft: 12,
+ },
+
+ personName: {
+  color: "#fff",
+  fontSize: 15,
+  fontWeight: "600",
+ },
+
+ personFull: {
+  color: "#8e8e93",
+  fontSize: 14,
+  marginTop: 2,
  },
 
  shareButton: {

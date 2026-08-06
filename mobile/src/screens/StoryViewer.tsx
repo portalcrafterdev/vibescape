@@ -3,32 +3,85 @@ import {
   View,
   Text,
   Image,
+  TextInput,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   Alert,
 } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { X, Trash2 } from 'lucide-react-native';
+import { X, Trash2, Send } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types/navigation';
-import { getUserStories, deleteStory, StoryOut } from '../../api/authApi';
+
+import {
+  getUserStories,
+  deleteStory,
+  startConversation,
+  sendMessage,
+  StoryOut,
+} from '../../api/authApi';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'StoryViewer'>;
 
+// How long one story stays up before the next one comes in.
+const DURATION = 15000;
+const STEP = 100;
+
 const StoryViewer = ({ route, navigation }: Props) => {
-  const { userId, username } = route.params;
+  const { userId, username, latestAt } = route.params;
 
   const [stories, setStories] = useState<StoryOut[]>([]);
   const [index, setIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // 0 to 1 across the bar of the story being shown.
+  const [progress, setProgress] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  const [reply, setReply] = useState('');
+  const [sending, setSending] = useState(false);
+
   const loadStories = async () => {
     try {
       const response = await getUserStories(userId);
       setStories(response);
+
+      // The API keeps no record of who watched what, so the newest one seen
+      // is remembered on the phone. The home screen greys the ring from it.
+      //
+      // The time the home screen already knows about is the safest one to
+      // save, because both sides then compare the very same value. Only when
+      // we arrive from somewhere else do we work it out from the stories, and
+      // then by the largest time, not by their order in the list.
+      let newest = latestAt ?? '';
+
+      if (!newest) {
+        let newestTime = 0;
+
+        response.forEach((item) => {
+          const time = new Date(item.created_at).getTime();
+
+          if (time > newestTime) {
+            newestTime = time;
+            newest = item.created_at;
+          }
+        });
+      }
+
+      if (newest) {
+        const saved = await AsyncStorage.getItem('seenStories');
+        const map = saved ? JSON.parse(saved) : {};
+
+        map[userId] = newest;
+
+        await AsyncStorage.setItem('seenStories', JSON.stringify(map));
+      }
     } catch (error) {
       console.log('Load stories failed', error);
     } finally {
@@ -56,11 +109,34 @@ const StoryViewer = ({ route, navigation }: Props) => {
     if (index > 0) setIndex(index - 1);
   };
 
+  // One timer fills the bar, the other moves on when it is full. Typing a
+  // reply holds both, so a story does not slide away mid sentence.
+  useEffect(() => {
+    if (!story || paused) return;
+
+    setProgress(0);
+
+    const tick = setInterval(
+      () => setProgress((old) => old + STEP / DURATION),
+      STEP,
+    );
+
+    const jump = setTimeout(goNext, DURATION);
+
+    return () => {
+      clearInterval(tick);
+      clearTimeout(jump);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, story?.id, paused, stories.length]);
+
   const handleDelete = () => {
     if (!story) return;
 
+    setPaused(true);
+
     Alert.alert('Delete story', 'This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
+      { text: 'Cancel', style: 'cancel', onPress: () => setPaused(false) },
       {
         text: 'Delete',
         style: 'destructive',
@@ -77,12 +153,38 @@ const StoryViewer = ({ route, navigation }: Props) => {
 
             setStories(left);
             setIndex(index > 0 ? index - 1 : 0);
+            setPaused(false);
           } catch (error) {
             console.log('Delete story failed', error);
+            setPaused(false);
           }
         },
       },
     ]);
+  };
+
+  // Replying to a story is a normal message to whoever posted it.
+  const handleReply = async () => {
+    if (!reply.trim() || sending || !story) return;
+
+    setSending(true);
+
+    try {
+      const conversation = await startConversation({
+        user_id: story.author.id,
+      });
+
+      await sendMessage(conversation.id, { body: reply.trim() });
+
+      setReply('');
+      setPaused(false);
+      Alert.alert('Sent', `Your reply went to ${story.author.username}.`);
+    } catch (error) {
+      console.log('Reply failed', error);
+      Alert.alert('Could not send', 'Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -105,10 +207,42 @@ const StoryViewer = ({ route, navigation }: Props) => {
           <TouchableOpacity style={styles.leftTap} onPress={goBack} />
           <TouchableOpacity style={styles.rightTap} onPress={goNext} />
 
+          {/* One bar per story, filling as this one plays. */}
+          <View style={styles.bars}>
+            {stories.map((item, i) => (
+              <View key={item.id} style={styles.barTrack}>
+                <View
+                  style={[
+                    styles.barFill,
+                    {
+                      width:
+                        i < index
+                          ? '100%'
+                          : i === index
+                          ? `${Math.min(progress, 1) * 100}%`
+                          : '0%',
+                    },
+                  ]}
+                />
+              </View>
+            ))}
+          </View>
+
           <View style={styles.header}>
+            <Image
+              source={
+                story.author.avatar_url
+                  ? { uri: story.author.avatar_url }
+                  : require('../assets/images/Portelcrafterlogo.png')
+              }
+              style={styles.avatar}
+            />
+
             <Text style={styles.username}>
               {story.author.username ?? username}
             </Text>
+
+            <Text style={styles.time}>{timeAgo(story.created_at)}</Text>
 
             <View style={styles.headerIcons}>
               {story.is_mine && (
@@ -123,13 +257,47 @@ const StoryViewer = ({ route, navigation }: Props) => {
             </View>
           </View>
 
-          <Text style={styles.counter}>
-            {index + 1} / {stories.length}
-          </Text>
+          {/* Only someone else's story can be answered. */}
+          {!story.is_mine && (
+            <KeyboardAvoidingView
+              style={styles.replyWrap}
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+              <View style={styles.replyRow}>
+                <TextInput
+                  value={reply}
+                  onChangeText={setReply}
+                  placeholder="Say something..."
+                  placeholderTextColor="#ddd"
+                  style={styles.replyInput}
+                  onFocus={() => setPaused(true)}
+                  onBlur={() => setPaused(false)}
+                />
+
+                <TouchableOpacity onPress={handleReply} disabled={sending}>
+                  {sending ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Send size={22} color="#fff" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </KeyboardAvoidingView>
+          )}
         </View>
       )}
     </SafeAreaView>
   );
+};
+
+// "3h" style, which is all the header has room for.
+const timeAgo = (iso: string) => {
+  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+
+  if (minutes < 1) return 'now';
+  if (minutes < 60) return `${minutes}m`;
+
+  return `${Math.floor(minutes / 60)}h`;
 };
 
 export default StoryViewer;
@@ -153,7 +321,7 @@ const styles = StyleSheet.create({
   leftTap: {
     position: 'absolute',
     top: 60,
-    bottom: 0,
+    bottom: 80,
     left: 0,
     width: '35%',
   },
@@ -161,24 +329,53 @@ const styles = StyleSheet.create({
   rightTap: {
     position: 'absolute',
     top: 60,
-    bottom: 0,
+    bottom: 80,
     right: 0,
     width: '65%',
   },
 
+  bars: {
+    position: 'absolute',
+    top: 8,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    gap: 4,
+  },
+
+  barTrack: {
+    flex: 1,
+    height: 2.5,
+    borderRadius: 2,
+    backgroundColor: '#ffffff55',
+    overflow: 'hidden',
+  },
+
+  barFill: {
+    height: '100%',
+    backgroundColor: '#fff',
+  },
+
   header: {
     position: 'absolute',
-    top: 12,
-    left: 16,
-    right: 16,
+    top: 22,
+    left: 12,
+    right: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+  },
+
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#262626',
   },
 
   headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 'auto',
   },
 
   trash: {
@@ -187,16 +384,39 @@ const styles = StyleSheet.create({
 
   username: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
+    marginLeft: 10,
   },
 
-  counter: {
-    position: 'absolute',
-    bottom: 20,
-    alignSelf: 'center',
-    color: '#8e8e93',
+  time: {
+    color: '#ddd',
     fontSize: 13,
+    marginLeft: 8,
+  },
+
+  replyWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+
+  replyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    margin: 12,
+    paddingHorizontal: 16,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#ffffff88',
+  },
+
+  replyInput: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 14,
   },
 
   loader: {

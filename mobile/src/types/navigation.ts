@@ -16,8 +16,11 @@ export type RootStackParamList = {
   // The reels screen passes mode 'REEL' so it opens ready to film.
   CreateScreen: { mode?: string } | undefined;
   UserProfile: { userId?: string; username?: string };
-  StoryViewer: { userId: string; username?: string };
+  // latestAt is the time of their newest story, saved once it is watched.
+  StoryViewer: { userId: string; username?: string; latestAt?: string };
   Comments: { postId: string };
+  // One post on its own, opened from a profile grid tile.
+  Post: { postId: string };
   // The profile hands over the reels it already has, and which one was tapped.
   ReelViewer: { reels: ReelOut[]; index: number };
   // Without the leading #, so it can go straight into the URL.

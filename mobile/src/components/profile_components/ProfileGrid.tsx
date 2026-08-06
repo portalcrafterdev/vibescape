@@ -12,10 +12,12 @@ import {
 } from 'react-native';
 
 import { Pin } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import {
   getUserPosts,
   getUserTagged,
+  getPost,
   deletePost,
   PostGridItem,
 } from '../../../api/authApi';
@@ -40,12 +42,18 @@ const ProfileGrid = ({
   onDeleted,
   tagged,
 }: gridprops) => {
+  const navigation = useNavigation<any>();
+
   const [posts, setPosts] = useState<PostGridItem[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Ids whose picture would not load, so the tile shows the logo instead of
+  // an empty grey square.
+  const [broken, setBroken] = useState<Record<string, boolean>>({});
 
   const loadPosts = async (nextCursor: string | null) => {
     if (!userId) return;
@@ -55,10 +63,25 @@ const ProfileGrid = ({
         ? await getUserTagged(userId, { cursor: nextCursor, limit: 30 })
         : await getUserPosts(userId, { cursor: nextCursor, limit: 30 });
 
-      // First page replaces the grid, later pages add to it.
-      setPosts(
-        nextCursor ? (old) => [...old, ...response.items] : response.items,
+      // The grid list leaves the picture out for some posts. Opening one on
+      // its own does bring it back, so those are asked for one by one and
+      // the tile is filled in from there.
+      const items = await Promise.all(
+        response.items.map(async (item) => {
+          if (item.image_url) return item;
+
+          try {
+            const full = await getPost(item.id);
+            return { ...item, image_url: full.image_url };
+          } catch (error) {
+            console.log('Load post failed', error);
+            return item;
+          }
+        }),
       );
+
+      // First page replaces the grid, later pages add to it.
+      setPosts(nextCursor ? (old) => [...old, ...items] : items);
       setCursor(response.next_cursor ?? null);
       setHasMore(!!response.has_more && !!response.next_cursor);
     } catch (error) {
@@ -129,16 +152,18 @@ const ProfileGrid = ({
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.item}
+            onPress={() => navigation.push('Post', { postId: item.id })}
             onLongPress={() => handleDelete(item)}
             activeOpacity={0.8}
           >
             <Image
               source={
-                item.image_url
+                item.image_url && !broken[item.id]
                   ? { uri: item.image_url }
                   : require('../../assets/images/Portelcrafterlogo.png')
               }
               style={styles.image}
+              onError={() => setBroken({ ...broken, [item.id]: true })}
             />
 
             {item.pinned && (

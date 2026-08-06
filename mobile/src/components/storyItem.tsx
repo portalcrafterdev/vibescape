@@ -16,6 +16,8 @@ interface storyprops {
   isMe?: boolean;
   // No story yet means a grey ring instead of the red one.
   hasStory?: boolean;
+  // Already watched, so the ring goes grey until they post again.
+  seen?: boolean;
   loading?: boolean;
   onPress?: () => void;
   onAdd?: () => void;
@@ -26,13 +28,19 @@ const StoryItem = ({
   imageUrl,
   isMe,
   hasStory,
+  seen,
   loading,
   onPress,
   onAdd,
 }: storyprops) => {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <View style={[styles.storyBorder, !hasStory && styles.noStoryBorder]}>
+      <View
+        style={[
+          styles.storyBorder,
+          (!hasStory || seen) && styles.noStoryBorder,
+        ]}
+      >
         <Image
           source={
             imageUrl
@@ -50,7 +58,7 @@ const StoryItem = ({
 
         {isMe && !loading && (
           <TouchableOpacity style={styles.plusButton} onPress={onAdd}>
-            <Plus color="white" size={14} />
+            <Plus color="black" size={14} />
           </TouchableOpacity>
         )}
       </View>
@@ -122,7 +130,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#0095F6',
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
