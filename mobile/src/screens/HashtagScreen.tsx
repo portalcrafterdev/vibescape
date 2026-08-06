@@ -37,6 +37,10 @@ const HashtagScreen = ({ route, navigation }: Props) => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // Ids whose picture would not load, so the tile shows the logo instead of
+  // an empty grey square.
+  const [broken, setBroken] = useState<Record<string, boolean>>({});
+
   const loadPosts = async (nextCursor: string | null) => {
     try {
       const response = await getHashtagPosts(tag, {
@@ -107,16 +111,21 @@ const HashtagScreen = ({ route, navigation }: Props) => {
           onEndReachedThreshold={0.4}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <View style={styles.item}>
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => navigation.push('Post', { postId: item.id })}
+              activeOpacity={0.8}
+            >
               <Image
                 source={
-                  item.image_url
+                  item.image_url && !broken[item.id]
                     ? { uri: item.image_url }
                     : require('../assets/images/Portelcrafterlogo.png')
                 }
                 style={styles.image}
+                onError={() => setBroken({ ...broken, [item.id]: true })}
               />
-            </View>
+            </TouchableOpacity>
           )}
           ListEmptyComponent={
             <Text style={styles.empty}>Nothing tagged #{tag} yet.</Text>

@@ -23,8 +23,10 @@ import {
   followUser,
   getUserById,
   getUserByUsername,
+  getUserStories,
   unfollowUser,
   UserProfile,
+  StoryOut,
 } from '../../api/authApi';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserProfile'>;
@@ -37,6 +39,9 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
   const [busy, setBusy] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
 
+  // Their stories, so the picture gets a ring that opens them.
+  const [stories, setStories] = useState<StoryOut[]>([]);
+
   const loadUser = async () => {
     try {
       // Use the id when we have it, otherwise look the user up by name.
@@ -45,6 +50,14 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
         : await getUserByUsername(username!);
 
       setUser(response);
+
+      // The tray on the home screen only carries people we follow, so the
+      // story is asked for straight from this profile instead.
+      try {
+        setStories(await getUserStories(response.id));
+      } catch (error) {
+        console.log('Load stories failed', error);
+      }
     } catch (error) {
       console.log('Load user failed', error);
     } finally {
@@ -115,6 +128,18 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
           <ProfileInfo
             user={user}
             showAddButton={false}
+            hasStory={stories.length > 0}
+            onPressAvatar={
+              stories.length > 0
+                ? () =>
+                    // No latestAt here, because the list order is not
+                    // promised. The viewer works the newest one out itself.
+                    navigation.push('StoryViewer', {
+                      userId: user.id,
+                      username: user.username,
+                    })
+                : undefined
+            }
             onPressFollowers={() => openFollowList('followers')}
             onPressFollowing={() => openFollowList('following')}
           />

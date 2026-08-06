@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -18,12 +18,22 @@ import {
 
 import { useNavigation } from '@react-navigation/native';
 
-import { likePost, unlikePost, deletePost, PostOut } from '../../api/authApi';
+import {
+  likePost,
+  unlikePost,
+  deletePost,
+  listComments,
+  PostOut,
+  CommentOut,
+} from '../../api/authApi';
 
 interface Props {
   post: PostOut;
   // Lets the feed drop the card once the post is gone.
   onDeleted?: (postId: string) => void;
+  // On a post of its own there is room for the first comments and the full
+  // date, the way Instagram shows it.
+  detail?: boolean;
 }
 
 // Turns the created_at date into "5m", "3h", "2d".
@@ -44,12 +54,60 @@ const timeAgo = (date: string) => {
   return `${Math.floor(days / 7)}w`;
 };
 
-const PostCard = ({ post, onDeleted }: Props) => {
+// "18 May 2025", which is how a post of its own is dated.
+const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+const fullDate = (date: string) => {
+  const when = new Date(date);
+
+  return `${when.getDate()} ${MONTHS[when.getMonth()]} ${when.getFullYear()}`;
+};
+
+const PostCard = ({ post, onDeleted, detail }: Props) => {
   const navigation = useNavigation<any>();
 
   const [liked, setLiked] = useState(!!post.is_liked);
   const [likes, setLikes] = useState(post.likes_count ?? 0);
   const [busy, setBusy] = useState(false);
+
+  // Kept here rather than read off the post, so adding a comment moves the
+  // number straight away instead of waiting for the next reload.
+  const [comments, setComments] = useState(post.comments_count ?? 0);
+
+  // A long caption is cut short until it is tapped open.
+  const [showAll, setShowAll] = useState(false);
+
+  // The first couple of comments, shown under the caption on a single post.
+  const [preview, setPreview] = useState<CommentOut[]>([]);
+
+  const loadPreview = async () => {
+    if (!detail) return;
+
+    try {
+      const response = await listComments(post.id, { limit: 2 });
+      setPreview(response.items);
+    } catch (error) {
+      console.log('Load comments failed', error);
+    }
+  };
+
+  useEffect(() => {
+    loadPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post.id, detail]);
 
   const handleLike = async () => {
     if (busy) return;
@@ -97,7 +155,15 @@ const PostCard = ({ post, onDeleted }: Props) => {
   };
 
   const openComments = () => {
-    navigation.push('Comments', { postId: post.id });
+    navigation.push('Comments', {
+      postId: post.id,
+      onChange: (delta: number) => {
+        setComments((old) => Math.max(0, old + delta));
+
+        // The two comments under the caption move as well.
+        loadPreview();
+      },
+    });
   };
 
   return (
@@ -149,6 +215,9 @@ const PostCard = ({ post, onDeleted }: Props) => {
             <MessageCircle color="white" size={26} />
           </TouchableOpacity>
 
+          {/* The count sits beside the icon, as it does on Instagram. */}
+          {comments > 0 && <Text style={styles.iconCount}>{comments}</Text>}
+
           <TouchableOpacity style={styles.iconSpacing}>
             <Send color="white" size={25} />
           </TouchableOpacity>
@@ -168,7 +237,11 @@ const PostCard = ({ post, onDeleted }: Props) => {
       {/* Caption. Splitting on #word keeps the tags as their own pieces, so
           each one can be tapped while the rest stays plain text. */}
       {!!post.caption && (
-        <Text style={styles.caption}>
+        <Text
+          style={styles.caption}
+          numberOfLines={showAll ? undefined : 2}
+          onPress={() => setShowAll(true)}
+        >
           <Text style={styles.bold}>
             {post.author.username}
           </Text>{' '}
@@ -190,18 +263,33 @@ const PostCard = ({ post, onDeleted }: Props) => {
         </Text>
       )}
 
+      {/* A long caption is cut at two lines until "more" is tapped. */}
+      {!!post.caption && !showAll && post.caption.length > 80 && (
+        <Text style={styles.more} onPress={() => setShowAll(true)}>
+          ... more
+        </Text>
+      )}
+
+      {/* The first comments, only where there is room for them. */}
+      {preview.map((item) => (
+        <TouchableOpacity key={item.id} onPress={openComments}>
+          <Text style={styles.caption} numberOfLines={1}>
+            <Text style={styles.bold}>{item.author.username}</Text>{' '}
+            {item.body}
+          </Text>
+        </TouchableOpacity>
+      ))}
+
       {/* Comments */}
       <TouchableOpacity onPress={openComments}>
         <Text style={styles.comments}>
-          {post.comments_count
-            ? `View all ${post.comments_count} comments`
-            : 'Add a comment'}
+          {comments ? `View all ${comments} comments` : 'Add a comment'}
         </Text>
       </TouchableOpacity>
 
-      {/* Time */}
+      {/* Time. On its own page the whole date is shown instead of "5h". */}
       <Text style={styles.time}>
-        {timeAgo(post.created_at)}
+        {detail ? fullDate(post.created_at) : timeAgo(post.created_at)}
       </Text>
 
     </View>
@@ -242,8 +330,9 @@ const styles = StyleSheet.create({
   },
 
   postImage: {
-    width: '100%',
     height: 420,
+    marginHorizontal: 12,
+    borderRadius: 12,
     backgroundColor: '#111',
   },
 
@@ -261,6 +350,19 @@ const styles = StyleSheet.create({
 
   iconSpacing: {
     marginLeft: 15,
+  },
+
+  iconCount: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+
+  more: {
+    color: 'gray',
+    marginHorizontal: 12,
+    marginTop: 2,
   },
 
   likes: {

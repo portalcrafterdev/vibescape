@@ -75,9 +75,25 @@ const HomeScreen = () => {
   };
 
   // Which rings are already watched. The API has no seen flag, so the story
-  // viewer writes this and we read it back here.
+  // viewer writes this and we read it back here. The key carries whoever is
+  // signed in, so watching on one account leaves the other one red.
   const loadSeen = async () => {
-    const saved = await AsyncStorage.getItem('seenStories');
+    if (!user) return;
+
+    const key = `seenStories-${user.id}`;
+    let saved = await AsyncStorage.getItem(key);
+
+    // The key used to be the same for everyone. Anything watched back then
+    // is moved across once, so those rings do not turn red again.
+    if (!saved) {
+      const shared = await AsyncStorage.getItem('seenStories');
+
+      if (shared) {
+        await AsyncStorage.setItem(key, shared);
+        saved = shared;
+      }
+    }
+
     setSeen(saved ? JSON.parse(saved) : {});
   };
 
@@ -109,11 +125,13 @@ const HomeScreen = () => {
   useEffect(() => {
     loadFeed(null);
     loadStories();
-    loadSeen();
   }, []);
 
+  // Both of these belong to whoever is signed in, so they wait for the user
+  // and run again if the account changes.
   useEffect(() => {
     loadMyStories();
+    loadSeen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
@@ -231,8 +249,9 @@ const HomeScreen = () => {
       renderItem={({ item }) => (
         <StoryItem
           name={item.author.username}
-          // || not ??, so an empty text from the API still falls back.
-          imageUrl={item.author.avatar_url || item.preview_url}
+          // Only ever the profile picture. Someone with none gets the
+          // default one, not a preview of their story.
+          imageUrl={item.author.avatar_url}
           hasStory
           seen={isSeen(item.author.id, item.latest_at)}
           onPress={() => openStory(item)}

@@ -46,7 +46,7 @@ const PostScreen = ({ route, navigation }: Props) => {
           <ChevronLeft size={26} color="#fff" />
         </TouchableOpacity>
 
-        <Text style={styles.title}>Post</Text>
+        <Text style={styles.title}>Posts</Text>
       </View>
 
       {loading ? (
@@ -56,7 +56,11 @@ const PostScreen = ({ route, navigation }: Props) => {
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Deleting from here leaves nothing to look at, so we go back. */}
-          <PostCard post={post} onDeleted={() => navigation.goBack()} />
+          <PostCard
+            post={post}
+            onDeleted={() => navigation.goBack()}
+            detail
+          />
         </ScrollView>
       )}
     </SafeAreaView>

@@ -22,6 +22,10 @@ interface infoprops{
  onPressFollowing?: () => void;
  /** The camera/plus badge only belongs on the signed-in user's own avatar. */
  showAddButton?: boolean;
+ /** A ring round the picture when there is a story waiting to be watched. */
+ hasStory?: boolean;
+ seenStory?: boolean;
+ onPressAvatar?: () => void;
 };
 
 const ProfileInfo = ({
@@ -29,6 +33,9 @@ const ProfileInfo = ({
   onPressFollowers,
   onPressFollowing,
   showAddButton = true,
+  hasStory,
+  seenStory,
+  onPressAvatar,
 }: infoprops) => {
   const firstLink = user?.links?.[0];
 
@@ -39,7 +46,16 @@ const ProfileInfo = ({
       <View style={styles.topRow}>
 
         {/* Profile Image */}
-        <View style={styles.avatarContainer}>
+        <TouchableOpacity
+          style={[
+            styles.avatarContainer,
+            hasStory && styles.ring,
+            hasStory && seenStory && styles.seenRing,
+          ]}
+          onPress={onPressAvatar}
+          disabled={!onPressAvatar}
+          activeOpacity={0.8}
+        >
           <Image
             source=
             { user?.avatar_url? {uri:user.avatar_url}:
@@ -56,7 +72,7 @@ const ProfileInfo = ({
               />
             </TouchableOpacity>
           )}
-        </View>
+        </TouchableOpacity>
 
         {/* Stats */}
         <View style={styles.statsContainer}>
@@ -134,6 +150,17 @@ const styles = StyleSheet.create({
 
   avatarContainer: {
     position: 'relative',
+  },
+
+  ring: {
+    borderWidth: 3,
+    borderRadius: 51,
+    borderColor: '#ff3040',
+    padding: 3,
+  },
+
+  seenRing: {
+    borderColor: '#3a3a3a',
   },
 
   avatar: {

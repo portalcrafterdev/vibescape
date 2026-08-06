@@ -18,6 +18,7 @@ import { X, Trash2, Send } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types/navigation';
+import { useProfile } from '../context/ProfileContext';
 
 import {
   getUserStories,
@@ -36,6 +37,9 @@ const STEP = 100;
 const StoryViewer = ({ route, navigation }: Props) => {
   const { userId, username, latestAt } = route.params;
 
+  // Whoever is watching, so the record of it belongs to their account.
+  const { user: me } = useProfile();
+
   const [stories, setStories] = useState<StoryOut[]>([]);
   const [index, setIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -51,37 +55,6 @@ const StoryViewer = ({ route, navigation }: Props) => {
     try {
       const response = await getUserStories(userId);
       setStories(response);
-
-      // The API keeps no record of who watched what, so the newest one seen
-      // is remembered on the phone. The home screen greys the ring from it.
-      //
-      // The time the home screen already knows about is the safest one to
-      // save, because both sides then compare the very same value. Only when
-      // we arrive from somewhere else do we work it out from the stories, and
-      // then by the largest time, not by their order in the list.
-      let newest = latestAt ?? '';
-
-      if (!newest) {
-        let newestTime = 0;
-
-        response.forEach((item) => {
-          const time = new Date(item.created_at).getTime();
-
-          if (time > newestTime) {
-            newestTime = time;
-            newest = item.created_at;
-          }
-        });
-      }
-
-      if (newest) {
-        const saved = await AsyncStorage.getItem('seenStories');
-        const map = saved ? JSON.parse(saved) : {};
-
-        map[userId] = newest;
-
-        await AsyncStorage.setItem('seenStories', JSON.stringify(map));
-      }
     } catch (error) {
       console.log('Load stories failed', error);
     } finally {
@@ -93,6 +66,54 @@ const StoryViewer = ({ route, navigation }: Props) => {
     loadStories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  // The API keeps no record of who watched what, so the newest story seen is
+  // remembered on the phone. The home screen greys the ring from it.
+  //
+  // The key carries the account doing the watching, so the same story is
+  // still red on another login.
+  //
+  // The time the home screen already knows about is the safest one to save,
+  // because both sides then compare the very same value. Arriving from
+  // anywhere else, it is worked out by the largest time rather than by the
+  // order the list came back in.
+  useEffect(() => {
+    if (!me || stories.length === 0) return;
+
+    let newest = latestAt ?? '';
+
+    if (!newest) {
+      let newestTime = 0;
+
+      stories.forEach((item) => {
+        const time = new Date(item.created_at).getTime();
+
+        if (time > newestTime) {
+          newestTime = time;
+          newest = item.created_at;
+        }
+      });
+    }
+
+    const save = async () => {
+      const key = `seenStories-${me.id}`;
+      const saved = await AsyncStorage.getItem(key);
+      const map = saved ? JSON.parse(saved) : {};
+
+      // Never step back to an older time. Opening an old story again must
+      // not undo a newer one that was already watched.
+      const before = map[userId];
+
+      if (before && new Date(before) >= new Date(newest)) return;
+
+      map[userId] = newest;
+
+      await AsyncStorage.setItem(key, JSON.stringify(map));
+    };
+
+    save();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me?.id, stories]);
 
   const story = stories[index];
 

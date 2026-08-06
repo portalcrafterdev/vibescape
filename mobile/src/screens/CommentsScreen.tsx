@@ -34,7 +34,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Comments'>;
 const emojis = ['❤️', '🙌', '🔥', '👏', '😢', '😍', '😮', '😂'];
 
 const CommentsScreen = ({ route, navigation }: Props) => {
-  const { postId } = route.params;
+  const { postId, onChange } = route.params;
   const { user } = useProfile();
 
   const [comments, setComments] = useState<CommentOut[]>([]);
@@ -147,6 +147,9 @@ const CommentsScreen = ({ route, navigation }: Props) => {
       // Newest first, matching the order the API returns.
       setComments([comment, ...comments]);
       setText('');
+
+      // The post behind this sheet keeps its own count, so it is told.
+      if (onChange) onChange(1);
     } catch (error: any) {
       console.log('Post comment failed', error);
 
@@ -174,6 +177,8 @@ const CommentsScreen = ({ route, navigation }: Props) => {
           try {
             await deleteComment(comment.id);
             setComments(comments.filter((item) => item.id !== comment.id));
+
+            if (onChange) onChange(-1);
           } catch (error) {
             console.log('Delete comment failed', error);
           }
@@ -241,9 +246,13 @@ const CommentsScreen = ({ route, navigation }: Props) => {
                   <Text style={styles.comment}>{item.body}</Text>
 
                   <View style={styles.actions}>
-                    <TouchableOpacity onPress={() => setReplyTo(item)}>
-                      <Text style={styles.action}>Reply</Text>
-                    </TouchableOpacity>
+                    {/* There is no point answering yourself, so Reply only
+                        shows on someone else's comment. */}
+                    {item.author.id !== user?.id && (
+                      <TouchableOpacity onPress={() => setReplyTo(item)}>
+                        <Text style={styles.action}>Reply</Text>
+                      </TouchableOpacity>
+                    )}
 
                     {!!item.replies_count && item.replies_count > 0 && (
                       <TouchableOpacity onPress={() => toggleReplies(item)}>
