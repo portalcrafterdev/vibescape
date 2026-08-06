@@ -258,7 +258,13 @@ const CommentsScreen = ({ route, navigation }: Props) => {
                 <StoryAvatar
                   userId={item.author.id}
                   username={item.author.username}
-                  avatarUrl={item.author.avatar_url}
+                  // My own comments carry whatever picture I had when the
+                  // API sent them, so mine comes from my profile instead.
+                  avatarUrl={
+                    item.author.id === user?.id
+                      ? user?.avatar_url
+                      : item.author.avatar_url
+                  }
                   size={34}
                 />
 
@@ -296,13 +302,15 @@ const CommentsScreen = ({ route, navigation }: Props) => {
                     ) : (
                       replies.map((reply) => (
                         <View key={reply.id} style={styles.replyRow}>
-                          <Image
-                            source={
-                              reply.author.avatar_url
-                                ? { uri: reply.author.avatar_url }
-                                : require('../assets/images/Portelcrafterlogo.png')
+                          <StoryAvatar
+                            userId={reply.author.id}
+                            username={reply.author.username}
+                            avatarUrl={
+                              reply.author.id === user?.id
+                                ? user?.avatar_url
+                                : reply.author.avatar_url
                             }
-                            style={styles.replyAvatar}
+                            size={26}
                           />
 
                           <View style={styles.replyBody}>

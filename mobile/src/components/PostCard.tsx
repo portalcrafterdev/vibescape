@@ -24,6 +24,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import EditPost from './EditPost';
 import StoryAvatar from './StoryAvatar';
+import { useProfile } from '../context/ProfileContext';
 
 import {
   likePost,
@@ -85,6 +86,9 @@ const fullDate = (date: string) => {
 
 const PostCard = ({ post, onDeleted, detail }: Props) => {
   const navigation = useNavigation<any>();
+
+  // Only used to keep my own picture up to date on my own posts.
+  const { user: me } = useProfile();
 
   const [liked, setLiked] = useState(!!post.is_liked);
   const [likes, setLikes] = useState(post.likes_count ?? 0);
@@ -223,7 +227,12 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
           <StoryAvatar
             userId={post.author.id}
             username={post.author.username}
-            avatarUrl={post.author.avatar_url}
+            // My own posts carry whatever picture I had when the API sent
+            // them, so the one from my profile is used instead. It is always
+            // the current one.
+            avatarUrl={
+              post.author.id === me?.id ? me?.avatar_url : post.author.avatar_url
+            }
           />
 
           <TouchableOpacity onPress={openAuthor}>
