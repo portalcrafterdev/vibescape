@@ -26,7 +26,14 @@ export type RootStackParamList = {
   ReelViewer: { reels: ReelOut[]; index: number };
   // Without the leading #, so it can go straight into the URL.
   Hashtag: { tag: string };
-  Chat: { conversationId: string; username?: string };
+  // The picture and the green dot come from the inbox row, which already
+  // knows them, so the chat header does not have to ask again.
+  Chat: {
+    conversationId: string;
+    username?: string;
+    avatarUrl?: string | null;
+    online?: boolean;
+  };
   FollowList: {
     userId: string;
     username?: string;

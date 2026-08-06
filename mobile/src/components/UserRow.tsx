@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
 
+import StoryAvatar from './StoryAvatar';
 import { followUser, unfollowUser, UserSummary } from '../../api/authApi';
 
 interface rowprops {
@@ -47,13 +47,11 @@ const UserRow = ({ user, onPress, onFollowChange }: rowprops) => {
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <Image
-        source={
-          user.avatar_url
-            ? { uri: user.avatar_url }
-            : require('../assets/images/Portelcrafterlogo.png')
-        }
-        style={styles.avatar}
+      <StoryAvatar
+        userId={user.id}
+        username={user.username}
+        avatarUrl={user.avatar_url}
+        size={44}
       />
 
       <View style={styles.names}>

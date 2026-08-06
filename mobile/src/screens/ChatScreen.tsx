@@ -2,18 +2,28 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
+  Image,
   TextInput,
   FlatList,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
+  Keyboard,
   Alert,
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Phone,
+  Video,
+  Smile,
+  Camera,
+  Mic,
+  Image as ImageIcon,
+  Sticker,
+  Plus,
+} from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types/navigation';
@@ -28,7 +38,7 @@ import {
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
 const ChatScreen = ({ route, navigation }: Props) => {
-  const { conversationId, username } = route.params;
+  const { conversationId, username, avatarUrl, online } = route.params;
 
   const [messages, setMessages] = useState<MessageOut[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -38,6 +48,25 @@ const ChatScreen = ({ route, navigation }: Props) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [sending, setSending] = useState(false);
   const [text, setText] = useState('');
+
+  // How much of the screen the keyboard covers, measured here rather than
+  // left to the window, which does not always give the room back.
+  const [keyboard, setKeyboard] = useState(0);
+
+  useEffect(() => {
+    const shown = Keyboard.addListener('keyboardDidShow', (event) =>
+      setKeyboard(event.endCoordinates.height),
+    );
+
+    const hidden = Keyboard.addListener('keyboardDidHide', () =>
+      setKeyboard(0),
+    );
+
+    return () => {
+      shown.remove();
+      hidden.remove();
+    };
+  }, []);
 
   const loadMessages = async (nextCursor: string | null) => {
     try {
@@ -96,6 +125,11 @@ const ChatScreen = ({ route, navigation }: Props) => {
     }
   };
 
+  // The inbox hands the picture over. Coming from anywhere else, the first
+  // message they sent has it too.
+  const theirAvatar =
+    avatarUrl || messages.find((item) => !item.is_mine)?.sender.avatar_url;
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
@@ -103,11 +137,31 @@ const ChatScreen = ({ route, navigation }: Props) => {
           <ArrowLeft size={26} color="#fff" strokeWidth={2.2} />
         </TouchableOpacity>
 
-        <Text style={styles.title} numberOfLines={1}>
-          {username ?? 'Chat'}
-        </Text>
+        <View style={styles.avatarBox}>
+          <Image
+            source={
+              theirAvatar
+                ? { uri: theirAvatar }
+                : require('../assets/images/Portelcrafterlogo.png')
+            }
+            style={styles.headerAvatar}
+          />
 
-        <View style={styles.placeholder} />
+          {/* The green dot only shows when the inbox said they were about. */}
+          {online && <View style={styles.dot} />}
+        </View>
+
+        <View style={styles.names}>
+          <Text style={styles.title} numberOfLines={1}>
+            {username ?? 'Chat'}
+          </Text>
+
+          {online && <Text style={styles.active}>Active now</Text>}
+        </View>
+
+        <Smile size={24} color="#fff" style={styles.headerIcon} />
+        <Phone size={22} color="#fff" style={styles.headerIcon} />
+        <Video size={24} color="#fff" />
       </View>
 
       {loading ? (
@@ -123,41 +177,86 @@ const ChatScreen = ({ route, navigation }: Props) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
           keyboardShouldPersistTaps="handled"
-          renderItem={({ item }) => (
-            <View style={item.is_mine ? styles.mineRow : styles.theirRow}>
-              <View style={item.is_mine ? styles.mine : styles.theirs}>
-                <Text style={styles.body}>{item.body}</Text>
+          renderItem={({ item, index }) => {
+            // The list is upside down, so index - 1 sits below on the screen
+            // and index + 1 sits above.
+            const below = messages[index - 1];
+            const above = messages[index + 1];
+
+            // The picture goes beside the last message of a run, the way
+            // Instagram does it, and the ones above it are pushed closer.
+            const showAvatar = !item.is_mine && (!below || below.is_mine);
+            const grouped = !!above && above.is_mine === item.is_mine;
+
+            return (
+              <View
+                style={[
+                  styles.row,
+                  item.is_mine ? styles.mineRow : styles.theirRow,
+                  grouped && styles.grouped,
+                ]}
+              >
+                {/* An empty circle keeps the run lined up under the one
+                    message that does show a picture. */}
+                {!item.is_mine &&
+                  (showAvatar ? (
+                    <Image
+                      source={
+                        item.sender.avatar_url
+                          ? { uri: item.sender.avatar_url }
+                          : require('../assets/images/Portelcrafterlogo.png')
+                      }
+                      style={styles.rowAvatar}
+                    />
+                  ) : (
+                    <View style={styles.rowAvatar} />
+                  ))}
+
+                <View style={item.is_mine ? styles.mine : styles.theirs}>
+                  <Text style={styles.body}>{item.body}</Text>
+                </View>
               </View>
-            </View>
-          )}
+            );
+          }}
           ListEmptyComponent={<Text style={styles.empty}>Say hello.</Text>}
         />
       )}
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      {/* The row rides up on top of the keyboard instead of hiding behind. */}
+      <View style={{ marginBottom: keyboard }}>
         <View style={styles.inputRow}>
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            placeholder="Message..."
-            placeholderTextColor="#777"
-            style={styles.input}
-            multiline
-          />
+          <View style={styles.cameraButton}>
+            <Camera size={20} color="#fff" />
+          </View>
 
-          <TouchableOpacity onPress={handleSend} disabled={sending}>
+          <View style={styles.pill}>
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              placeholder="Message..."
+              placeholderTextColor="#8e8e93"
+              style={styles.input}
+              multiline
+            />
+
+            {/* Typing swaps the row of icons for Send, as Instagram does. */}
             {sending ? (
               <ActivityIndicator size="small" color="#6C63FF" />
+            ) : text.trim() ? (
+              <TouchableOpacity onPress={handleSend}>
+                <Text style={styles.send}>Send</Text>
+              </TouchableOpacity>
             ) : (
-              <Text style={[styles.send, !text.trim() && styles.sendOff]}>
-                Send
-              </Text>
+              <View style={styles.pillIcons}>
+                <Mic size={22} color="#fff" />
+                <ImageIcon size={22} color="#fff" />
+                <Sticker size={22} color="#fff" />
+                <Plus size={22} color="#fff" />
+              </View>
             )}
-          </TouchableOpacity>
+          </View>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -174,20 +273,71 @@ const styles = StyleSheet.create({
     height: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
     paddingHorizontal: 16,
     borderBottomWidth: 0.5,
     borderBottomColor: '#262626',
   },
 
+  avatarBox: {
+    position: 'relative',
+  },
+
+  headerAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#262626',
+  },
+
+  dot: {
+    position: 'absolute',
+    right: -1,
+    bottom: -1,
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: '#31c04d',
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+
+  names: {
+    flex: 1,
+  },
+
   title: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
   },
 
-  placeholder: {
+  active: {
+    color: '#8e8e93',
+    fontSize: 12,
+    marginTop: 1,
+  },
+
+  headerIcon: {
+    marginRight: 8,
+  },
+
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+    marginVertical: 6,
+  },
+
+  grouped: {
+    marginVertical: 1,
+  },
+
+  rowAvatar: {
     width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#262626',
   },
 
   listContent: {
@@ -196,14 +346,15 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
 
+  // The row lays its children out sideways now, so which end a message sits
+  // at is justifyContent. alignItems only decides how they line up top to
+  // bottom, which is why mine were still coming out on the left.
   mineRow: {
-    alignItems: 'flex-end',
-    marginVertical: 3,
+    justifyContent: 'flex-end',
   },
 
   theirRow: {
-    alignItems: 'flex-start',
-    marginVertical: 3,
+    justifyContent: 'flex-start',
   },
 
   mine: {
@@ -230,10 +381,29 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    gap: 10,
+    paddingHorizontal: 12,
     paddingVertical: 10,
-    borderTopWidth: 0.5,
-    borderTopColor: '#262626',
+  },
+
+  cameraButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#0f6fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  pill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    minHeight: 42,
+    paddingHorizontal: 16,
+    borderRadius: 21,
+    backgroundColor: '#262626',
   },
 
   input: {
@@ -241,17 +411,19 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 15,
     maxHeight: 100,
-    marginRight: 12,
+    paddingVertical: 8,
+  },
+
+  pillIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
   },
 
   send: {
-    color: '#6C63FF',
+    color: '#0f6fff',
     fontSize: 15,
     fontWeight: '700',
-  },
-
-  sendOff: {
-    color: '#3a3a3a',
   },
 
   loader: {

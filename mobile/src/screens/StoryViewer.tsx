@@ -12,13 +12,12 @@ import {
   Alert,
 } from 'react-native';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { X, Trash2, Send } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types/navigation';
-import { useProfile } from '../context/ProfileContext';
+import { useStories } from '../context/StoryContext';
 
 import {
   getUserStories,
@@ -37,8 +36,8 @@ const STEP = 100;
 const StoryViewer = ({ route, navigation }: Props) => {
   const { userId, username, latestAt } = route.params;
 
-  // Whoever is watching, so the record of it belongs to their account.
-  const { user: me } = useProfile();
+  // Watching a story greys its ring everywhere the person's picture shows.
+  const { markSeen } = useStories();
 
   const [stories, setStories] = useState<StoryOut[]>([]);
   const [index, setIndex] = useState(0);
@@ -68,52 +67,27 @@ const StoryViewer = ({ route, navigation }: Props) => {
   }, [userId]);
 
   // The API keeps no record of who watched what, so the newest story seen is
-  // remembered on the phone. The home screen greys the ring from it.
+  // handed to the story context, which every ring in the app reads from.
   //
-  // The key carries the account doing the watching, so the same story is
-  // still red on another login.
-  //
-  // The time the home screen already knows about is the safest one to save,
-  // because both sides then compare the very same value. Arriving from
-  // anywhere else, it is worked out by the largest time rather than by the
-  // order the list came back in.
+  // The time the tray already knows about is the safest one to save, because
+  // both sides then compare the very same value. Arriving from anywhere
+  // else, it is worked out by the largest time rather than by the order the
+  // list came back in. Compared as text, not as dates, since the API sends
+  // six decimal places, which is more than a date understands.
   useEffect(() => {
-    if (!me || stories.length === 0) return;
+    if (stories.length === 0) return;
 
     let newest = latestAt ?? '';
 
     if (!newest) {
-      let newestTime = 0;
-
       stories.forEach((item) => {
-        const time = new Date(item.created_at).getTime();
-
-        if (time > newestTime) {
-          newestTime = time;
-          newest = item.created_at;
-        }
+        if (!newest || item.created_at > newest) newest = item.created_at;
       });
     }
 
-    const save = async () => {
-      const key = `seenStories-${me.id}`;
-      const saved = await AsyncStorage.getItem(key);
-      const map = saved ? JSON.parse(saved) : {};
-
-      // Never step back to an older time. Opening an old story again must
-      // not undo a newer one that was already watched.
-      const before = map[userId];
-
-      if (before && new Date(before) >= new Date(newest)) return;
-
-      map[userId] = newest;
-
-      await AsyncStorage.setItem(key, JSON.stringify(map));
-    };
-
-    save();
+    markSeen(userId, newest);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [me?.id, stories]);
+  }, [stories]);
 
   const story = stories[index];
 

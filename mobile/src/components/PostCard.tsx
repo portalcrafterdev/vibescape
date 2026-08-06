@@ -3,8 +3,10 @@ import {
   View,
   Text,
   Image,
+  Modal,
   StyleSheet,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   Alert,
 } from 'react-native';
 
@@ -14,9 +16,14 @@ import {
   Send,
   Bookmark,
   EllipsisVertical,
+  Pencil,
+  Trash2,
 } from 'lucide-react-native';
 
 import { useNavigation } from '@react-navigation/native';
+
+import EditPost from './EditPost';
+import StoryAvatar from './StoryAvatar';
 
 import {
   likePost,
@@ -90,8 +97,17 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
   // A long caption is cut short until it is tapped open.
   const [showAll, setShowAll] = useState(false);
 
+  // When the last tap landed, and the big heart that follows a double one.
+  const [lastTap, setLastTap] = useState(0);
+  const [burst, setBurst] = useState(false);
+
   // The first couple of comments, shown under the caption on a single post.
   const [preview, setPreview] = useState<CommentOut[]>([]);
+
+  // The three dots sheet, and the screen for changing the post.
+  const [menu, setMenu] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [caption, setCaption] = useState(post.caption ?? '');
 
   const loadPreview = async () => {
     if (!detail) return;
@@ -108,6 +124,25 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
     loadPreview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [post.id, detail]);
+
+  // Two taps within a moment of each other turn the like on, or off again
+  // if it is already on. The big heart only shows when one is being added.
+  const handleTap = () => {
+    const now = Date.now();
+
+    if (now - lastTap < 300) {
+      setLastTap(0);
+
+      if (!liked) {
+        setBurst(true);
+        setTimeout(() => setBurst(false), 700);
+      }
+
+      handleLike();
+    } else {
+      setLastTap(now);
+    }
+  };
 
   const handleLike = async () => {
     if (busy) return;
@@ -128,9 +163,20 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
     }
   };
 
-  // Only my own posts can be deleted, so there is nothing to show on others.
+  // Only my own posts can be changed, so there is nothing to show on others.
   const handleMenu = () => {
     if (!post.is_mine) return;
+
+    setMenu(true);
+  };
+
+  const startEdit = () => {
+    setMenu(false);
+    setEditing(true);
+  };
+
+  const handleDelete = () => {
+    setMenu(false);
 
     Alert.alert('Delete post', 'This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
@@ -171,32 +217,43 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.userRow} onPress={openAuthor}>
-          <Image
-            source={
-              post.author.avatar_url
-                ? { uri: post.author.avatar_url }
-                : require('../assets/images/Portelcrafterlogo.png')
-            }
-            style={styles.avatar}
+        <View style={styles.userRow}>
+          {/* Tapping the picture opens their story when they have one, so
+              only the name goes to the profile. */}
+          <StoryAvatar
+            userId={post.author.id}
+            username={post.author.username}
+            avatarUrl={post.author.avatar_url}
           />
 
-          <Text style={styles.username}>
-            {post.author.username}
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity onPress={openAuthor}>
+            <Text style={styles.username}>
+              {post.author.username}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity onPress={handleMenu}>
           <EllipsisVertical color="white" size={20} />
         </TouchableOpacity>
       </View>
 
-      {/* Post Image */}
+      {/* Post Image. Two taps close together is a like. */}
       {!!post.image_url && (
-        <Image
-          source={{ uri: post.image_url }}
-          style={styles.postImage}
-        />
+        <TouchableWithoutFeedback onPress={handleTap}>
+          <View>
+            <Image
+              source={{ uri: post.image_url }}
+              style={styles.postImage}
+            />
+
+            {burst && (
+              <View style={styles.burstBox}>
+                <Heart size={100} color="#fff" fill="#fff" />
+              </View>
+            )}
+          </View>
+        </TouchableWithoutFeedback>
       )}
 
       {/* Action Icons */}
@@ -236,7 +293,7 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
 
       {/* Caption. Splitting on #word keeps the tags as their own pieces, so
           each one can be tapped while the rest stays plain text. */}
-      {!!post.caption && (
+      {!!caption && (
         <Text
           style={styles.caption}
           numberOfLines={showAll ? undefined : 2}
@@ -245,7 +302,7 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
           <Text style={styles.bold}>
             {post.author.username}
           </Text>{' '}
-          {post.caption.split(/(#\w+)/g).map((part, i) =>
+          {caption.split(/(#\w+)/g).map((part, i) =>
             part.startsWith('#') ? (
               <Text
                 key={i}
@@ -264,7 +321,7 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
       )}
 
       {/* A long caption is cut at two lines until "more" is tapped. */}
-      {!!post.caption && !showAll && post.caption.length > 80 && (
+      {!!caption && !showAll && caption.length > 80 && (
         <Text style={styles.more} onPress={() => setShowAll(true)}>
           ... more
         </Text>
@@ -291,6 +348,51 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
       <Text style={styles.time}>
         {detail ? fullDate(post.created_at) : timeAgo(post.created_at)}
       </Text>
+
+      {/* The three dots sheet */}
+      <Modal
+        visible={menu}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setMenu(false)}
+      >
+        <TouchableOpacity
+          style={styles.backdrop}
+          activeOpacity={1}
+          onPress={() => setMenu(false)}
+        />
+
+        <View style={styles.sheet}>
+          <View style={styles.handle} />
+
+          <TouchableOpacity style={styles.sheetRow} onPress={startEdit}>
+            <Pencil size={22} color="#fff" />
+            <Text style={styles.sheetText}>Edit</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.sheetRow} onPress={handleDelete}>
+            <Trash2 size={22} color="#ed4956" />
+            <Text style={[styles.sheetText, styles.danger]}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* Changing the post */}
+      <Modal
+        visible={editing}
+        animationType="slide"
+        onRequestClose={() => setEditing(false)}
+      >
+        <EditPost
+          post={post}
+          caption={caption}
+          onClose={() => setEditing(false)}
+          onSaved={(text) => {
+            setCaption(text);
+            setEditing(false);
+          }}
+        />
+      </Modal>
 
     </View>
   );
@@ -334,6 +436,17 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     borderRadius: 12,
     backgroundColor: '#111',
+  },
+
+  burstBox: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.9,
   },
 
   actions: {
@@ -389,6 +502,45 @@ const styles = StyleSheet.create({
     color: 'gray',
     marginHorizontal: 12,
     marginTop: 8,
+  },
+
+  backdrop: {
+    flex: 1,
+    backgroundColor: '#00000099',
+  },
+
+  sheet: {
+    backgroundColor: '#1c1c1c',
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
+    paddingBottom: 24,
+  },
+
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#5a5a5a',
+    alignSelf: 'center',
+    marginTop: 8,
+    marginBottom: 10,
+  },
+
+  sheetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+
+  sheetText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+
+  danger: {
+    color: '#ed4956',
   },
 
   time: {

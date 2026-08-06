@@ -141,6 +141,7 @@ const MessageScreen = () => {
       navigation.push("Chat", {
         conversationId: conversation.id,
         username: person.username,
+        avatarUrl: person.avatar_url,
       });
     } catch (error) {
       console.log("Start conversation failed", error);
@@ -176,6 +177,10 @@ const MessageScreen = () => {
               navigation.push("Chat", {
                 conversationId: item.id,
                 username: item.other.username,
+                // The row already knows both, so the chat header can show
+                // the picture and the green dot straight away.
+                avatarUrl: item.other.avatar_url,
+                online: item.online,
               })
             }
           />

@@ -38,7 +38,9 @@ const StoryItem = ({
       <View
         style={[
           styles.storyBorder,
-          (!hasStory || seen) && styles.noStoryBorder,
+          // Nothing to watch means no ring at all, watched means a grey one.
+          !hasStory && styles.noBorder,
+          hasStory && seen && styles.noStoryBorder,
         ]}
       >
         <Image
@@ -95,6 +97,12 @@ const styles = StyleSheet.create({
 
   noStoryBorder: {
     borderColor: '#3a3a3a',
+  },
+
+  // Transparent rather than no border, so the bubble keeps its size and the
+  // row does not shift when a story appears.
+  noBorder: {
+    borderColor: 'transparent',
   },
 
   image: {

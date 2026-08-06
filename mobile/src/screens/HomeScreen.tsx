@@ -9,7 +9,6 @@ import {
   Alert,
 } from 'react-native';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { PhotoIdentifier } from '@react-native-camera-roll/camera-roll';
 
@@ -18,12 +17,12 @@ import PostCard from '../components/PostCard';
 import PhotoPickerModal from '../components/PhotoPickerModal';
 
 import { useProfile } from '../context/ProfileContext';
+import { useStories } from '../context/StoryContext';
 import { toUploadable } from '../utils/photo';
 import { uploadImage } from '../../api/media';
 
 import {
   getFeed,
-  getStoryTray,
   getUserStories,
   createStory,
   PostOut,
@@ -35,10 +34,12 @@ const HomeScreen = () => {
   const navigation = useNavigation<any>();
   const { user } = useProfile();
 
+  // The tray and the watched list live in one place now, so every picture in
+  // the app draws the same ring.
+  const { tray: stories, ringFor, refresh: refreshStories } = useStories();
+
   const [posts, setPosts] = useState<PostOut[]>([]);
-  const [stories, setStories] = useState<StoryTray[]>([]);
   const [myStories, setMyStories] = useState<StoryOut[]>([]);
-  const [seen, setSeen] = useState<Record<string, string>>({});
 
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
@@ -65,49 +66,6 @@ const HomeScreen = () => {
     }
   };
 
-  const loadStories = async () => {
-    try {
-      const response = await getStoryTray();
-      setStories(response);
-    } catch (error) {
-      console.log('Load stories failed', error);
-    }
-  };
-
-  // Which rings are already watched. The API has no seen flag, so the story
-  // viewer writes this and we read it back here. The key carries whoever is
-  // signed in, so watching on one account leaves the other one red.
-  const loadSeen = async () => {
-    if (!user) return;
-
-    const key = `seenStories-${user.id}`;
-    let saved = await AsyncStorage.getItem(key);
-
-    // The key used to be the same for everyone. Anything watched back then
-    // is moved across once, so those rings do not turn red again.
-    if (!saved) {
-      const shared = await AsyncStorage.getItem('seenStories');
-
-      if (shared) {
-        await AsyncStorage.setItem(key, shared);
-        saved = shared;
-      }
-    }
-
-    setSeen(saved ? JSON.parse(saved) : {});
-  };
-
-  // Grey once the newest story of theirs is older than what we watched. My
-  // own bubble goes through here too, so it greys the same way.
-  const isSeen = (authorId?: string, latest?: string | null) => {
-    if (!authorId || !latest) return false;
-
-    const watched = seen[authorId];
-
-    if (!watched) return false;
-
-    return new Date(watched).getTime() >= new Date(latest).getTime();
-  };
 
   // Our own bubble comes from here, not the tray. The tray may leave our own
   // story out, and then we would never be able to open it.
@@ -124,32 +82,25 @@ const HomeScreen = () => {
 
   useEffect(() => {
     loadFeed(null);
-    loadStories();
   }, []);
 
-  // Both of these belong to whoever is signed in, so they wait for the user
-  // and run again if the account changes.
+  // My own story belongs to whoever is signed in, so it waits for the user
+  // and loads again if the account changes.
   useEffect(() => {
     loadMyStories();
-    loadSeen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Coming back from the story viewer, where one may have been deleted.
   useEffect(() => {
-    return navigation.addListener('focus', () => {
-      loadMyStories();
-
-      // Coming back from a story means a ring may now be grey.
-      loadSeen();
-    });
+    return navigation.addListener('focus', loadMyStories);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigation, user?.id]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadFeed(null);
-    await loadStories();
+    await refreshStories();
     await loadMyStories();
     setRefreshing(false);
   };
@@ -200,7 +151,7 @@ const HomeScreen = () => {
   // My own bubble always comes first, even before I post anything, so drop
   // my entry from the tray to avoid showing it twice.
   const otherStories = stories.filter(
-    (item) => !item.is_mine && item.author.id !== user?.id,
+    (item: StoryTray) => !item.is_mine && item.author.id !== user?.id,
   );
 
   const hasMyStory = myStories.length > 0;
@@ -210,7 +161,7 @@ const HomeScreen = () => {
   let myLatest = '';
 
   myStories.forEach((item) => {
-    if (!myLatest || new Date(item.created_at) > new Date(myLatest)) {
+    if (!myLatest || item.created_at > myLatest) {
       myLatest = item.created_at;
     }
   });
@@ -230,7 +181,7 @@ const HomeScreen = () => {
           imageUrl={user?.avatar_url}
           isMe
           hasStory={hasMyStory}
-          seen={isSeen(user?.id, myLatest)}
+          seen={ringFor(user?.id, myLatest) === 'seen'}
           loading={uploading}
           onPress={() => {
             if (hasMyStory && user) {
@@ -253,7 +204,7 @@ const HomeScreen = () => {
           // default one, not a preview of their story.
           imageUrl={item.author.avatar_url}
           hasStory
-          seen={isSeen(item.author.id, item.latest_at)}
+          seen={ringFor(item.author.id, item.latest_at) === 'seen'}
           onPress={() => openStory(item)}
         />
       )}

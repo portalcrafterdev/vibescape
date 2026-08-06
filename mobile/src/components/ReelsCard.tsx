@@ -4,10 +4,12 @@ import {
   Text,
   StyleSheet,
   Dimensions,
+  TouchableWithoutFeedback,
   Alert,
 } from 'react-native';
 
 import Video from 'react-native-video';
+import { Heart } from 'lucide-react-native';
 
 import ReelsHeader from './ReelHeader';
 import ReelActions from './ReelAction';
@@ -45,6 +47,10 @@ const ReelCard = ({
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
+  // When the last tap landed, and the big heart that follows a double one.
+  const [lastTap, setLastTap] = useState(0);
+  const [burst, setBurst] = useState(false);
+
   // One view per card, not one per replay.
   const counted = useRef(false);
 
@@ -71,6 +77,25 @@ const ReelCard = ({
       console.log('Like reel failed', error);
     } finally {
       setBusy(false);
+    }
+  };
+
+  // Two taps within a moment of each other turn the like on, or off again
+  // if it is already on. The big heart only shows when one is being added.
+  const handleTap = () => {
+    const now = Date.now();
+
+    if (now - lastTap < 300) {
+      setLastTap(0);
+
+      if (!liked) {
+        setBurst(true);
+        setTimeout(() => setBurst(false), 700);
+      }
+
+      handleLike();
+    } else {
+      setLastTap(now);
     }
   };
 
@@ -127,6 +152,16 @@ const ReelCard = ({
         </View>
       )}
 
+      {/* Two taps close together is a like, the way Instagram does it. This
+          sits over the video but before the buttons, so they still work. */}
+      <TouchableWithoutFeedback onPress={handleTap}>
+        <View style={styles.tapArea}>
+          {burst && (
+            <Heart size={110} color="#fff" fill="#fff" style={styles.burst} />
+          )}
+        </View>
+      </TouchableWithoutFeedback>
+
       {/* Top Header */}
       <ReelsHeader onBack={onBack} />
 
@@ -162,6 +197,20 @@ const styles = StyleSheet.create({
   width: '100%',
   height: '100%',
 },
+
+  tapArea: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  burst: {
+    opacity: 0.9,
+  },
 
   failed: {
     position: 'absolute',

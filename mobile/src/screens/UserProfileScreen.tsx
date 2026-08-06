@@ -13,6 +13,7 @@ import { ArrowLeft, ChevronDown } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types/navigation';
+import { useStories } from '../context/StoryContext';
 import ProfileInfo from '../components/profile_components/ProfileInfo';
 import ProfileTabs from '../components/profile_components/ProfileTabs';
 import ProfileGrid from '../components/profile_components/ProfileGrid';
@@ -33,6 +34,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'UserProfile'>;
 
 const UserProfileScreen = ({ route, navigation }: Props) => {
   const { userId, username } = route.params;
+
+  const { ringFor } = useStories();
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,6 +95,17 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
     }
   };
 
+  // The newest of their stories. The list order is not promised, so pick the
+  // largest time rather than the first or the last. Compared as text, since
+  // the API sends more decimal places than a date understands.
+  let newestStory = '';
+
+  stories.forEach((item) => {
+    if (!newestStory || item.created_at > newestStory) {
+      newestStory = item.created_at;
+    }
+  });
+
   const openFollowList = (mode: 'followers' | 'following') => {
     if (!user) return;
 
@@ -129,6 +143,8 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
             user={user}
             showAddButton={false}
             hasStory={stories.length > 0}
+            // Grey once their newest story has been watched, red until then.
+            seenStory={ringFor(user.id, newestStory) === 'seen'}
             onPressAvatar={
               stories.length > 0
                 ? () =>

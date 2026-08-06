@@ -8,8 +8,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
+  Keyboard,
+  useWindowDimensions,
   Alert,
 } from 'react-native';
 
@@ -18,6 +18,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types/navigation';
 import { useProfile } from '../context/ProfileContext';
+import StoryAvatar from '../components/StoryAvatar';
 
 import {
   listComments,
@@ -48,6 +49,34 @@ const CommentsScreen = ({ route, navigation }: Props) => {
 
   // The API only has comments for posts, so a reel id comes back 404.
   const [missing, setMissing] = useState(false);
+
+  // How much of the screen the keyboard is covering. The sheet sits in its
+  // own window, where the usual keyboard handling does not reach it, so it
+  // is measured and moved by hand.
+  const { height: screenHeight } = useWindowDimensions();
+  const [keyboard, setKeyboard] = useState(0);
+
+  useEffect(() => {
+    const shown = Keyboard.addListener('keyboardDidShow', (event) =>
+      setKeyboard(event.endCoordinates.height),
+    );
+
+    const hidden = Keyboard.addListener('keyboardDidHide', () =>
+      setKeyboard(0),
+    );
+
+    return () => {
+      shown.remove();
+      hidden.remove();
+    };
+  }, []);
+
+  // Normally two thirds of the screen, but never taller than the space left
+  // above the keyboard, so the top of the sheet cannot slide out of sight.
+  const sheetHeight = Math.min(
+    screenHeight * 0.68,
+    screenHeight - keyboard - 40,
+  );
 
   // Set while answering someone, which sends a reply instead of a comment.
   const [replyTo, setReplyTo] = useState<CommentOut | null>(null);
@@ -188,10 +217,7 @@ const CommentsScreen = ({ route, navigation }: Props) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.overlay}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.overlay}>
       {/* The reel keeps showing through here. Tapping it closes the sheet. */}
       <TouchableOpacity
         style={styles.backdrop}
@@ -199,7 +225,9 @@ const CommentsScreen = ({ route, navigation }: Props) => {
         onPress={() => navigation.goBack()}
       />
 
-      <View style={styles.sheet}>
+      <View
+        style={[styles.sheet, { height: sheetHeight, marginBottom: keyboard }]}
+      >
         <View style={styles.handle} />
 
         {loading ? (
@@ -226,20 +254,13 @@ const CommentsScreen = ({ route, navigation }: Props) => {
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
               <View style={styles.row}>
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.push('UserProfile', { userId: item.author.id })
-                  }
-                >
-                  <Image
-                    source={
-                      item.author.avatar_url
-                        ? { uri: item.author.avatar_url }
-                        : require('../assets/images/Portelcrafterlogo.png')
-                    }
-                    style={styles.avatar}
-                  />
-                </TouchableOpacity>
+                {/* The ring shows when they have a story to watch. */}
+                <StoryAvatar
+                  userId={item.author.id}
+                  username={item.author.username}
+                  avatarUrl={item.author.avatar_url}
+                  size={34}
+                />
 
                 <View style={styles.body}>
                   <Text style={styles.username}>{item.author.username}</Text>
@@ -365,7 +386,7 @@ const CommentsScreen = ({ route, navigation }: Props) => {
           </View>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -382,7 +403,6 @@ const styles = StyleSheet.create({
   },
 
   sheet: {
-    height: '68%',
     backgroundColor: '#000',
     borderTopLeftRadius: 14,
     borderTopRightRadius: 14,
