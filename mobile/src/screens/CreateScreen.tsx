@@ -261,9 +261,16 @@ const CreateScreen = ()=>{
             caption: caption.trim() || null,
           });
         } else {
+          // Any #word in the caption is sent as a tag as well, so the post
+          // turns up under it.
+          const tags = (caption.match(/#(\w+)/g) || []).map((word) =>
+            word.slice(1),
+          );
+
           await createPost({
             media_asset_id: asset.asset_id,
             caption: caption.trim() || null,
+            hashtags: tags,
           });
         }
 

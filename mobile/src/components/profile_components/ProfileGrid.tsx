@@ -13,7 +13,12 @@ import {
 
 import { Pin } from 'lucide-react-native';
 
-import { getUserPosts, deletePost, PostGridItem } from '../../../api/authApi';
+import {
+  getUserPosts,
+  getUserTagged,
+  deletePost,
+  PostGridItem,
+} from '../../../api/authApi';
 
 const SIZE = Dimensions.get('window').width / 3;
 
@@ -24,9 +29,17 @@ interface gridprops {
   // Only the signed-in user can remove their own posts.
   canDelete?: boolean;
   onDeleted?: () => void;
+  // The Tagged tab shows posts this user appears in, not the ones they made.
+  tagged?: boolean;
 }
 
-const ProfileGrid = ({ userId, reload, canDelete, onDeleted }: gridprops) => {
+const ProfileGrid = ({
+  userId,
+  reload,
+  canDelete,
+  onDeleted,
+  tagged,
+}: gridprops) => {
   const [posts, setPosts] = useState<PostGridItem[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -38,10 +51,9 @@ const ProfileGrid = ({ userId, reload, canDelete, onDeleted }: gridprops) => {
     if (!userId) return;
 
     try {
-      const response = await getUserPosts(userId, {
-        cursor: nextCursor,
-        limit: 30,
-      });
+      const response = tagged
+        ? await getUserTagged(userId, { cursor: nextCursor, limit: 30 })
+        : await getUserPosts(userId, { cursor: nextCursor, limit: 30 });
 
       // First page replaces the grid, later pages add to it.
       setPosts(
@@ -100,7 +112,11 @@ const ProfileGrid = ({ userId, reload, canDelete, onDeleted }: gridprops) => {
   }
 
   if (posts.length === 0) {
-    return <Text style={styles.empty}>No posts yet.</Text>;
+    return (
+      <Text style={styles.empty}>
+        {tagged ? 'No tagged posts yet.' : 'No posts yet.'}
+      </Text>
+    );
   }
 
   return (

@@ -169,6 +169,9 @@ export interface PostOut {
   likes_count?: number;
   comments_count?: number;
   pinned?: boolean;
+  hashtags?: string[];
+  tagged_users?: TaggedUser[];
+  mentions?: string[];
   is_liked?: boolean;
   is_mine?: boolean;
 }
@@ -182,15 +185,52 @@ export interface PostGridItem {
   comments_count?: number;
 }
 
+/** Someone tagged in a picture. x and y place the label, 0 to 1 across it. */
+export interface TaggedUser {
+  id: string;
+  username: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
+  x?: number | null;
+  y?: number | null;
+}
+
+export interface PostTagInput {
+  user_id: string;
+  x?: number | null;
+  y?: number | null;
+}
+
+export interface AddPostTagRequest {
+  user_id: string;
+  x?: number | null;
+  y?: number | null;
+}
+
 export interface CreatePostRequest {
   image_url?: string | null;
   media_asset_id?: string | null;
   caption?: string | null;
+  hashtags?: string[];
+  tagged_users?: PostTagInput[];
 }
 
 export interface UpdatePostRequest {
   caption?: string | null;
   pinned?: boolean | null;
+  hashtags?: string[];
+  tagged_users?: PostTagInput[];
+}
+
+export interface HashtagOut {
+  tag: string;
+  posts_count?: number;
+}
+
+/** One box holding both kinds of result. */
+export interface SearchResponse {
+  users?: UserSummary[];
+  hashtags?: HashtagOut[];
 }
 
 export interface LikeResponse {
@@ -220,10 +260,20 @@ export interface CommentOut {
   author: PostAuthor;
   body: string;
   created_at: string;
+  /** Set when this comment is a reply to another one. */
+  parent_id?: string | null;
+  replies_count?: number;
+  mentions?: string[];
   can_delete?: boolean;
 }
 
 export interface CreateCommentRequest {
+  body: string;
+  /** Pass the comment being answered to post a reply instead. */
+  parent_id?: string | null;
+}
+
+export interface CreateReplyRequest {
   body: string;
 }
 
@@ -567,6 +617,39 @@ export const getUserPosts = async (
 ): Promise<PaginatedGrid> =>
   unwrap(await api.get(`/users/${userId}/posts`, { params }));
 
+/** GET /users/{user_id}/tagged?cursor=&limit= — posts this user appears in. */
+export const getUserTagged = async (
+  userId: string,
+  params: CursorParams = {}
+): Promise<PaginatedGrid> =>
+  unwrap(await api.get(`/users/${userId}/tagged`, { params }));
+
+/** GET /posts/{post_id}/tags — everyone tagged in a picture. */
+export const listPostTags = async (
+  postId: string
+): Promise<TaggedUser[]> => unwrap(await api.get(`/posts/${postId}/tags`));
+
+/** POST /posts/{post_id}/tags -> 201 — author only. */
+export const addPostTag = async (
+  postId: string,
+  data: AddPostTagRequest
+): Promise<TaggedUser> =>
+  unwrap(await api.post(`/posts/${postId}/tags`, data));
+
+/** DELETE /posts/{post_id}/tags/{user_id} -> 204 — author only. */
+export const removePostTag = async (
+  postId: string,
+  userId: string
+): Promise<void> => {
+  await api.delete(`/posts/${postId}/tags/${userId}`);
+};
+
+/** GET /users/me/mentions?cursor=&limit= — posts that mention you. */
+export const getMyMentions = async (
+  params: CursorParams = {}
+): Promise<PaginatedGrid> =>
+  unwrap(await api.get("/users/me/mentions", { params }));
+
 // ============================================================
 // Comments  —  /posts/{id}/comments, /comments
 // ============================================================
@@ -589,6 +672,49 @@ export const listComments = async (
 export const deleteComment = async (commentId: string): Promise<void> => {
   await api.delete(`/comments/${commentId}`);
 };
+
+/** GET /comments/{comment_id}/replies?cursor=&limit= — answers to a comment. */
+export const listReplies = async (
+  commentId: string,
+  params: CursorParams = {}
+): Promise<PaginatedComments> =>
+  unwrap(await api.get(`/comments/${commentId}/replies`, { params }));
+
+/** POST /comments/{comment_id}/replies -> 201 — answer a comment. */
+export const createReply = async (
+  commentId: string,
+  data: CreateReplyRequest
+): Promise<CommentOut> =>
+  unwrap(await api.post(`/comments/${commentId}/replies`, data));
+
+// ============================================================
+// Hashtags & search  —  /hashtags, /search
+// ============================================================
+
+/** GET /hashtags/search?q= — tags matching what was typed. */
+export const searchHashtags = async (
+  q: string,
+  limit = 20
+): Promise<HashtagOut[]> =>
+  unwrap(await api.get("/hashtags/search", { params: { q, limit } }));
+
+/** GET /hashtags/{tag} — one tag and how many posts carry it. */
+export const getHashtag = async (tag: string): Promise<HashtagOut> =>
+  unwrap(await api.get(`/hashtags/${tag}`));
+
+/** GET /hashtags/{tag}/posts?cursor=&limit= — the grid for one tag. */
+export const getHashtagPosts = async (
+  tag: string,
+  params: CursorParams = {}
+): Promise<PaginatedGrid> =>
+  unwrap(await api.get(`/hashtags/${tag}/posts`, { params }));
+
+/** GET /search?q= — users and hashtags in one answer. */
+export const globalSearch = async (
+  q: string,
+  limit = 20
+): Promise<SearchResponse> =>
+  unwrap(await api.get("/search", { params: { q, limit } }));
 
 // ============================================================
 // Media  —  /media

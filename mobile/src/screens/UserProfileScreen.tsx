@@ -160,7 +160,7 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
           {activeTab === 'reels' && <ProfileReels userId={user.id} />}
 
           {activeTab === 'tagged' && (
-            <Text style={styles.message}>Nothing tagged yet.</Text>
+            <ProfileGrid userId={user.id} tagged />
           )}
         </ScrollView>
       )}

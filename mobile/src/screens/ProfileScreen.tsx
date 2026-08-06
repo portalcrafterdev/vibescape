@@ -106,7 +106,10 @@ const ProfileScreen = () => {
               />
             )}
 
-            {activeTab === 'tagged' && <Text>This is Tagged Screen</Text>}
+            {/* Someone else made these posts, so there is nothing to delete. */}
+            {activeTab === 'tagged' && (
+              <ProfileGrid userId={user?.id} reload={reload} tagged />
+            )}
           </>
         )}
       </ScrollView>

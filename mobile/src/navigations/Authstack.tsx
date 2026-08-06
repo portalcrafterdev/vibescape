@@ -19,6 +19,7 @@ import FollowListScreen from '../screens/FollowListScreen';
 import StoryViewer from '../screens/StoryViewer';
 import CommentsScreen from '../screens/CommentsScreen';
 import ReelViewerScreen from '../screens/ReelViewerScreen';
+import HashtagScreen from '../screens/HashtagScreen';
 import ChatScreen from '../screens/ChatScreen';
 
 const {Navigator , Screen} = createNativeStackNavigator<RootStackParamList>();
@@ -95,6 +96,10 @@ const AuthStack = () => {
     <Screen
     name='ReelViewer'
     component= {ReelViewerScreen}/>
+
+    <Screen
+    name='Hashtag'
+    component= {HashtagScreen}/>
 
     <Screen
     name='Chat'

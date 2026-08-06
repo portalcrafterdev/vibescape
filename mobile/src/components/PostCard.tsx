@@ -165,13 +165,28 @@ const PostCard = ({ post, onDeleted }: Props) => {
         {likes} likes
       </Text>
 
-      {/* Caption */}
+      {/* Caption. Splitting on #word keeps the tags as their own pieces, so
+          each one can be tapped while the rest stays plain text. */}
       {!!post.caption && (
         <Text style={styles.caption}>
           <Text style={styles.bold}>
             {post.author.username}
           </Text>{' '}
-          {post.caption}
+          {post.caption.split(/(#\w+)/g).map((part, i) =>
+            part.startsWith('#') ? (
+              <Text
+                key={i}
+                style={styles.tag}
+                onPress={() =>
+                  navigation.push('Hashtag', { tag: part.slice(1) })
+                }
+              >
+                {part}
+              </Text>
+            ) : (
+              part
+            ),
+          )}
         </Text>
       )}
 
@@ -252,6 +267,10 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     marginHorizontal: 12,
+  },
+
+  tag: {
+    color: '#4da6ff',
   },
 
   caption: {

@@ -23,6 +23,8 @@ import {
   listComments,
   createComment,
   deleteComment,
+  listReplies,
+  createReply,
   CommentOut,
 } from '../../api/authApi';
 
@@ -46,6 +48,34 @@ const CommentsScreen = ({ route, navigation }: Props) => {
 
   // The API only has comments for posts, so a reel id comes back 404.
   const [missing, setMissing] = useState(false);
+
+  // Set while answering someone, which sends a reply instead of a comment.
+  const [replyTo, setReplyTo] = useState<CommentOut | null>(null);
+
+  // Only one comment shows its replies at a time, so one list is enough.
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [replies, setReplies] = useState<CommentOut[]>([]);
+  const [loadingReplies, setLoadingReplies] = useState(false);
+
+  const toggleReplies = async (comment: CommentOut) => {
+    if (openId === comment.id) {
+      setOpenId(null);
+      return;
+    }
+
+    setOpenId(comment.id);
+    setReplies([]);
+    setLoadingReplies(true);
+
+    try {
+      const response = await listReplies(comment.id, { limit: 20 });
+      setReplies(response.items);
+    } catch (error) {
+      console.log('Load replies failed', error);
+    } finally {
+      setLoadingReplies(false);
+    }
+  };
 
   const loadComments = async (nextCursor: string | null) => {
     try {
@@ -92,6 +122,26 @@ const CommentsScreen = ({ route, navigation }: Props) => {
     setSending(true);
 
     try {
+      // Answering someone posts a reply against their comment instead.
+      if (replyTo) {
+        const reply = await createReply(replyTo.id, { body: body.trim() });
+
+        if (openId === replyTo.id) setReplies([...replies, reply]);
+
+        // Keep the "view replies" count honest without reloading.
+        setComments(
+          comments.map((item) =>
+            item.id === replyTo.id
+              ? { ...item, replies_count: (item.replies_count ?? 0) + 1 }
+              : item,
+          ),
+        );
+
+        setReplyTo(null);
+        setText('');
+        return;
+      }
+
       const comment = await createComment(postId, { body: body.trim() });
 
       // Newest first, matching the order the API returns.
@@ -189,6 +239,52 @@ const CommentsScreen = ({ route, navigation }: Props) => {
                 <View style={styles.body}>
                   <Text style={styles.username}>{item.author.username}</Text>
                   <Text style={styles.comment}>{item.body}</Text>
+
+                  <View style={styles.actions}>
+                    <TouchableOpacity onPress={() => setReplyTo(item)}>
+                      <Text style={styles.action}>Reply</Text>
+                    </TouchableOpacity>
+
+                    {!!item.replies_count && item.replies_count > 0 && (
+                      <TouchableOpacity onPress={() => toggleReplies(item)}>
+                        <Text style={styles.action}>
+                          {openId === item.id
+                            ? 'Hide replies'
+                            : `View ${item.replies_count} replies`}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {openId === item.id && (
+                    loadingReplies ? (
+                      <ActivityIndicator
+                        style={styles.replyLoader}
+                        size="small"
+                        color="#fff"
+                      />
+                    ) : (
+                      replies.map((reply) => (
+                        <View key={reply.id} style={styles.replyRow}>
+                          <Image
+                            source={
+                              reply.author.avatar_url
+                                ? { uri: reply.author.avatar_url }
+                                : require('../assets/images/Portelcrafterlogo.png')
+                            }
+                            style={styles.replyAvatar}
+                          />
+
+                          <View style={styles.replyBody}>
+                            <Text style={styles.username}>
+                              {reply.author.username}
+                            </Text>
+                            <Text style={styles.comment}>{reply.body}</Text>
+                          </View>
+                        </View>
+                      ))
+                    )
+                  )}
                 </View>
 
                 {item.can_delete && (
@@ -208,6 +304,19 @@ const CommentsScreen = ({ route, navigation }: Props) => {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Shows who is being answered, with a way out of it. */}
+        {!!replyTo && (
+          <View style={styles.replyingRow}>
+            <Text style={styles.replyingText}>
+              Replying to {replyTo.author.username}
+            </Text>
+
+            <TouchableOpacity onPress={() => setReplyTo(null)}>
+              <Text style={styles.action}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.inputRow}>
           <Image
@@ -335,6 +444,54 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     marginTop: 2,
+  },
+
+  actions: {
+    flexDirection: 'row',
+    marginTop: 6,
+  },
+
+  action: {
+    color: '#8e8e93',
+    fontSize: 12,
+    fontWeight: '600',
+    marginRight: 18,
+  },
+
+  replyLoader: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+
+  replyRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 10,
+  },
+
+  replyAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#262626',
+  },
+
+  replyBody: {
+    flex: 1,
+    marginLeft: 10,
+  },
+
+  replyingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+
+  replyingText: {
+    color: '#8e8e93',
+    fontSize: 12,
   },
 
   emojiRow: {
