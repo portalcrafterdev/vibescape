@@ -81,7 +81,7 @@ const ProfileScreen = () => {
 
             <ProfileButtons user={user} />
 
-            <StoryHighlight />
+            <StoryHighlight userId={user?.id} reload={reload} canAdd />
 
             <ProfileTabs
               activeTab={activeTab}

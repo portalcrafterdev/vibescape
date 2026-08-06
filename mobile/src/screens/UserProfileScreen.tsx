@@ -9,11 +9,15 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, ChevronDown } from 'lucide-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types/navigation';
 import ProfileInfo from '../components/profile_components/ProfileInfo';
+import ProfileTabs from '../components/profile_components/ProfileTabs';
+import ProfileGrid from '../components/profile_components/ProfileGrid';
+import ProfileReels from '../components/profile_components/ProfileReels';
+import StoryHighlight from '../components/profile_components/StoryHighlight';
 
 import {
   followUser,
@@ -31,6 +35,7 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [activeTab, setActiveTab] = useState('posts');
 
   const loadUser = async () => {
     try {
@@ -127,9 +132,15 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
                 {busy ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <Text style={styles.buttonText}>
-                    {user.is_following ? 'Following' : 'Follow'}
-                  </Text>
+                  <View style={styles.buttonInner}>
+                    <Text style={styles.buttonText}>
+                      {user.is_following ? 'Following' : 'Follow'}
+                    </Text>
+
+                    {user.is_following && (
+                      <ChevronDown size={16} color="#fff" strokeWidth={2.5} />
+                    )}
+                  </View>
                 )}
               </TouchableOpacity>
 
@@ -137,6 +148,19 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
                 <Text style={styles.buttonText}>Message</Text>
               </TouchableOpacity>
             </View>
+          )}
+
+          <StoryHighlight userId={user.id} />
+
+          <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+
+          {/* No delete here, since these belong to someone else. */}
+          {activeTab === 'posts' && <ProfileGrid userId={user.id} />}
+
+          {activeTab === 'reels' && <ProfileReels userId={user.id} />}
+
+          {activeTab === 'tagged' && (
+            <Text style={styles.message}>Nothing tagged yet.</Text>
           )}
         </ScrollView>
       )}
@@ -206,6 +230,12 @@ const styles = StyleSheet.create({
 
   greyButton: {
     backgroundColor: '#262626',
+  },
+
+  buttonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
 
   buttonText: {
