@@ -29,6 +29,9 @@ import {
 import {
   updatePost,
   searchUsers,
+  listPostTags,
+  addPostTag,
+  removePostTag,
   PostOut,
   UserSummary,
 } from '../../api/authApi';
@@ -78,6 +81,37 @@ const EditPost = ({ post, caption, onClose, onSaved }: editprops) => {
       avatar_url: item.avatar_url,
     })),
   );
+
+  // The list as it stood when this screen opened, so saving can send only
+  // what actually changed.
+  const [before, setBefore] = useState<string[]>(
+    (post.tagged_users ?? []).map((item) => item.id),
+  );
+
+  // The post can be carrying an old list, since anybody tagged is allowed to
+  // take themselves off. Asking makes sure saving does not put them back.
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const list = await listPostTags(post.id);
+
+        setTagged(
+          list.map((item) => ({
+            id: item.id,
+            username: item.username,
+            display_name: item.display_name,
+            avatar_url: item.avatar_url,
+          })),
+        );
+
+        setBefore(list.map((item) => item.id));
+      } catch (error) {
+        console.log('Load tags failed', error);
+      }
+    };
+
+    load();
+  }, [post.id]);
 
   const [showTags, setShowTags] = useState(false);
   const [query, setQuery] = useState('');
@@ -155,8 +189,22 @@ const EditPost = ({ post, caption, onClose, onSaved }: editprops) => {
       await updatePost(post.id, {
         caption: draft.trim() || null,
         hashtags: tags,
-        tagged_users: tagged.map((item) => ({ user_id: item.id })),
       });
+
+      // Only the people who changed are touched. Sending the whole list back
+      // through the post would forget where each name sits on the picture,
+      // since the places are not carried here.
+      const now = tagged.map((item) => item.id);
+
+      for (const id of now) {
+        if (!before.includes(id)) await addPostTag(post.id, { user_id: id });
+      }
+
+      for (const id of before) {
+        if (!now.includes(id)) await removePostTag(post.id, id);
+      }
+
+      setBefore(now);
 
       onSaved(draft.trim());
     } catch (error) {

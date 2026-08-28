@@ -69,7 +69,7 @@ export default function BottomTabs() {
       fontFamily: 'Billabong',
     }}
   >
-    Instagram
+    VibeScape
   </Text>
 ),
 

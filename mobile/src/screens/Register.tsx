@@ -194,7 +194,7 @@ const RegisterScreen = ({ navigation }: Props) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={{flexGrow:1, justifyContent:"center"}}>
-        <Text style={styles.logo}>Instagram</Text>
+        <Text style={styles.logo}>VibeScape</Text>
 
         <Text style={styles.subtitle}>
           Create a new account

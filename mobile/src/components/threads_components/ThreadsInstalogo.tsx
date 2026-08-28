@@ -12,7 +12,7 @@ const ThreadsInstalogo = () => {
 
       <View style={styles.content}>
         <Text style={styles.title}>
-          Install and join with Instagram
+          Install and join with VibeScape
         </Text>
 
         <Text style={styles.username}>

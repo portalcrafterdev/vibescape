@@ -35,7 +35,7 @@ export const settingsData = [
   },
   {
     id: "6",
-    title: "Instagram for tablets",
+    title: "VibeScape for tablets",
     icon: Tablet,
   },
 ];

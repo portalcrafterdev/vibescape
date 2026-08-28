@@ -146,7 +146,7 @@ const LinkPage = ({ route, navigation }: Props)=>{
 
  <View style={{flexDirection: "row",  marginHorizontal: 22, marginTop:5}}>
     <Text style={styles.descrip}>
-        Your links are visible to everyone on and off Instagram.
+        Your links are visible to everyone on and off VibeScape.
              <Text style={styles.learnmore}>
         Learn more
     </Text>

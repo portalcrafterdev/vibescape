@@ -114,7 +114,7 @@ const LoginScreen = ({ navigation }: Props) => {
     resizeMode="contain">
 
     </Image>
-    <Text style={styles.logo}> Instagram</Text>
+    <Text style={styles.logo}> VibeScape</Text>
   </View>
 
       <TextInput

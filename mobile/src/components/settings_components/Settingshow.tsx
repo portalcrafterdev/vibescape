@@ -4,7 +4,7 @@ import { StyleSheet, View , Text} from "react-native";
 const Settinghow = ()=>{
     return(
    <View>
-   <Text style={styles.txt}> How to use Instagram</Text>
+   <Text style={styles.txt}> How to use VibeScape</Text>
    </View>
     );
 };

@@ -36,6 +36,8 @@ import {
   deletePost,
   listComments,
   getUserById,
+  listPostTags,
+  removePostTag,
   PostOut,
   CommentOut,
   UserSummary,
@@ -215,18 +217,17 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
     navigation.push('UserProfile', { userId: post.author.id });
   };
 
-  // The post only carries names and pictures for the people in it, not
-  // whether I follow them, so each one is looked up when the sheet opens.
+  // Asked every time it opens, because somebody may have taken themselves
+  // off since the post was loaded. The list carries names and pictures but
+  // not whether I follow them, so each one is looked up as well.
   const openTags = async () => {
     setShowTags(true);
-
-    if (people.length > 0) return;
-
     setLoadingTags(true);
 
     try {
+      const list = await listPostTags(post.id);
       const found = await Promise.all(
-        (post.tagged_users ?? []).map((item) => getUserById(item.id)),
+        list.map((item) => getUserById(item.id)),
       );
 
       setPeople(found);
@@ -238,6 +239,35 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
     } finally {
       setLoadingTags(false);
     }
+  };
+
+  // My own post lets me take anybody off it, and anybody tagged can take
+  // themselves off, which is the one thing the whole-post save cannot do.
+  const removeTag = (person: UserSummary) => {
+    const self = person.id === me?.id;
+
+    Alert.alert(
+      self ? 'Remove me' : 'Remove tag',
+      self
+        ? 'You will be taken off this photo.'
+        : `${person.username} will be taken off this photo.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await removePostTag(post.id, person.id);
+              setPeople(people.filter((item) => item.id !== person.id));
+            } catch (error) {
+              console.log('Remove tag failed', error);
+              Alert.alert('Could not remove', 'Please try again.');
+            }
+          },
+        },
+      ],
+    );
   };
 
   const openComments = () => {
@@ -428,6 +458,12 @@ const PostCard = ({ post, onDeleted, detail }: Props) => {
                 <UserRow
                   key={item.id}
                   user={item}
+                  big
+                  onRemove={
+                    post.is_mine || item.id === me?.id
+                      ? () => removeTag(item)
+                      : undefined
+                  }
                   onPress={() => {
                     setShowTags(false);
                     navigation.push('UserProfile', { userId: item.id });

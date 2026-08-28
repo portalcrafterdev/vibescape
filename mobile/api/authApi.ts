@@ -657,7 +657,8 @@ export const addPostTag = async (
 ): Promise<TaggedUser> =>
   unwrap(await api.post(`/posts/${postId}/tags`, data));
 
-/** DELETE /posts/{post_id}/tags/{user_id} -> 204 — author only. */
+/** DELETE /posts/{post_id}/tags/{user_id} -> 204 — the post's author, and
+ *  the tagged person themselves, since being tagged is done to you. */
 export const removePostTag = async (
   postId: string,
   userId: string
