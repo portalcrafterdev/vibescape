@@ -1,0 +1,64 @@
+import { ProfileLink, ReelOut } from '../../api/authApi';
+
+export type RootStackParamList = {
+  Splash: undefined;
+  Login: undefined;
+  Forgot: undefined;
+  Register: undefined;
+  Maintabs : undefined;
+  // GenderScreen and LinkPage send their result back through these params.
+  EditProfile: { gender?: string; links?: ProfileLink[] } | undefined;
+  LinkPage: { links?: ProfileLink[] } | undefined;
+  BannerScreen: undefined;
+  GenderScreen: { gender?: string } | undefined;
+  ThreadsScreen: undefined;
+  SettingsScreen: undefined;
+  // The reels screen passes mode 'REEL' so it opens ready to film.
+  CreateScreen: { mode?: string } | undefined;
+  UserProfile: { userId?: string; username?: string };
+  // latestAt is the time of their newest story, saved once it is watched.
+  StoryViewer: { userId: string; username?: string; latestAt?: string };
+  // onChange lets the post keep its comment count right without reloading.
+  // mine says the post belongs to me, so I can clear anyone's comment off it.
+  Comments: {
+    // A post id, or a reel id when kind says so. Comments live on both, but
+    // they are asked for down different roads.
+    postId: string;
+    kind?: 'post' | 'reel';
+    mine?: boolean;
+    onChange?: (delta: number) => void;
+  };
+  // One post on its own, opened from a profile grid tile.
+  Post: { postId: string };
+  // The gallery of photos and videos to put up as a story.
+  AddStory: undefined;
+  // Picking stories to keep, then naming them.
+  NewHighlight: undefined;
+  // mine decides whether the bin and the owner's bar show. userId is whose
+  // profile it sits on, so a reply can be sent to them.
+  HighlightViewer: {
+    highlightId: string;
+    title?: string;
+    mine?: boolean;
+    userId?: string;
+    username?: string;
+    avatarUrl?: string | null;
+  };
+  // The profile hands over the reels it already has, and which one was tapped.
+  ReelViewer: { reels: ReelOut[]; index: number };
+  // Without the leading #, so it can go straight into the URL.
+  Hashtag: { tag: string };
+  // The picture and the green dot come from the inbox row, which already
+  // knows them, so the chat header does not have to ask again.
+  Chat: {
+    conversationId: string;
+    username?: string;
+    avatarUrl?: string | null;
+    online?: boolean;
+  };
+  FollowList: {
+    userId: string;
+    username?: string;
+    mode: 'followers' | 'following';
+  };
+};

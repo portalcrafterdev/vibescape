@@ -1,0 +1,38 @@
+buildscript {
+    ext {
+        buildToolsVersion = "36.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 36
+        targetSdkVersion = 36
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "2.1.20"
+        media3Version = "1.8.0"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+    }
+}
+
+apply plugin: "com.facebook.react.rootproject"
+
+// react-native-video builds against media3 1.8.0, but CameraX (pulled in by
+// react-native-vision-camera) raises media3 to 1.9.0 on the runtime classpath.
+// Compiling against 1.8.0 and running against 1.9.0 crashes the reels player
+// with NoSuchMethodError on DefaultLoadControl, so everything is held at 1.8.0.
+// react-native-video 6.19.2 cannot build against 1.9.0, so this is the only
+// version the two libraries share.
+allprojects {
+    configurations.all {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == "androidx.media3") {
+                details.useVersion "1.8.0"
+            }
+        }
+    }
+}

@@ -1,0 +1,147 @@
+import React from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+
+import { Plus } from 'lucide-react-native';
+
+interface storyprops {
+  name: string;
+  imageUrl?: string | null;
+  isMe?: boolean;
+  // No story yet means a grey ring instead of the red one.
+  hasStory?: boolean;
+  // Already watched, so the ring goes grey until they post again.
+  seen?: boolean;
+  loading?: boolean;
+  onPress?: () => void;
+  onAdd?: () => void;
+}
+
+const StoryItem = ({
+  name,
+  imageUrl,
+  isMe,
+  hasStory,
+  seen,
+  loading,
+  onPress,
+  onAdd,
+}: storyprops) => {
+  return (
+    <TouchableOpacity style={styles.container} onPress={onPress}>
+      <View
+        style={[
+          styles.storyBorder,
+          // Nothing to watch means no ring at all, watched means a grey one.
+          !hasStory && styles.noBorder,
+          hasStory && seen && styles.noStoryBorder,
+        ]}
+      >
+        <Image
+          source={
+            imageUrl
+              ? { uri: imageUrl }
+              : require('../assets/images/Portelcrafterlogo.png')
+          }
+          style={styles.image}
+        />
+
+        {loading && (
+          <View style={styles.loading}>
+            <ActivityIndicator size="small" color="#fff" />
+          </View>
+        )}
+
+        {isMe && !loading && (
+          <TouchableOpacity style={styles.plusButton} onPress={onAdd}>
+            <Plus color="black" size={14} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <Text
+        numberOfLines={1}
+        style={styles.name}
+      >
+        {name}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
+export default StoryItem;
+
+const styles = StyleSheet.create({
+  container: {
+    width: 80,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+
+  storyBorder: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 3,
+    borderColor: '#ff3040',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+
+  noStoryBorder: {
+    borderColor: '#3a3a3a',
+  },
+
+  // Transparent rather than no border, so the bubble keeps its size and the
+  // row does not shift when a story appears.
+  noBorder: {
+    borderColor: 'transparent',
+  },
+
+  image: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#262626',
+  },
+
+  loading: {
+    position: 'absolute',
+    top: 3,
+    left: 3,
+    right: 3,
+    bottom: 3,
+    borderRadius: 34,
+    backgroundColor: '#000000A0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  name: {
+    color: '#fff',
+    fontSize: 12,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+
+  plusButton: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+});
