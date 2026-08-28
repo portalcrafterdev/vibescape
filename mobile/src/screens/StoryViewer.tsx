@@ -6,6 +6,7 @@ import {
   Modal,
   FlatList,
   TextInput,
+  PanResponder,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
@@ -18,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Video from 'react-native-video';
 import {
   X,
+  Eye,
   Send,
   Users,
   Share2,
@@ -28,16 +30,16 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../types/navigation';
 import { useStories } from '../context/StoryContext';
-import UserRow from '../components/UserRow';
 
 import {
   getUserStories,
   deleteStory,
   startConversation,
   sendMessage,
-  listFollowers,
+  viewStory,
+  getStoryViewers,
   StoryOut,
-  UserSummary,
+  StoryViewerOut,
 } from '../../api/authApi';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'StoryViewer'>;
@@ -73,27 +75,26 @@ const StoryViewer = ({ route, navigation }: Props) => {
   const [reply, setReply] = useState('');
   const [sending, setSending] = useState(false);
 
-  // Who the story went out to. The API keeps no record of who opened one,
-  // so this is the audience: everybody following me.
+  // Who has watched the story being shown. Only the person who posted it is
+  // allowed to ask for the list, so this is only ever filled for my own.
   const [showActivity, setShowActivity] = useState(false);
-  const [audience, setAudience] = useState<UserSummary[]>([]);
-  const [loadingAudience, setLoadingAudience] = useState(false);
+  const [viewers, setViewers] = useState<StoryViewerOut[]>([]);
+  const [loadingViewers, setLoadingViewers] = useState(false);
+  const [views, setViews] = useState(0);
 
   const openActivity = async () => {
+    if (!story) return;
+
     setPaused(true);
     setShowActivity(true);
-
-    if (audience.length > 0) return;
-
-    setLoadingAudience(true);
+    setLoadingViewers(true);
 
     try {
-      const response = await listFollowers(userId, { limit: 50 });
-      setAudience(response.items);
+      setViewers(await getStoryViewers(story.id, { limit: 100 }));
     } catch (error) {
-      console.log('Load followers failed', error);
+      console.log('Load viewers failed', error);
     } finally {
-      setLoadingAudience(false);
+      setLoadingViewers(false);
     }
   };
 
@@ -118,8 +119,9 @@ const StoryViewer = ({ route, navigation }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  // The API keeps no record of who watched what, so the newest story seen is
-  // handed to the story context, which every ring in the app reads from.
+  // The newest story seen is handed to the story context, which every ring
+  // in the app reads from. The server remembers this too, but only after the
+  // tray is asked again, so this greys the ring straight away.
   //
   // The time the tray already knows about is the safest one to save, because
   // both sides then compare the very same value. Arriving from anywhere
@@ -142,6 +144,40 @@ const StoryViewer = ({ route, navigation }: Props) => {
   }, [stories]);
 
   const story = stories[index];
+
+  // Tell the server the story was opened. Sending the same one again does
+  // not count twice, and looking at my own is never counted, so the number
+  // that comes back is the one to show under my own story.
+  useEffect(() => {
+    if (!story) return;
+
+    setViews(story.views_count ?? 0);
+
+    const send = async () => {
+      try {
+        const response = await viewStory(story.id);
+        setViews(response.views_count);
+      } catch (error) {
+        console.log('View story failed', error);
+      }
+    };
+
+    send();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [story?.id]);
+
+  // Dragging up on my own story opens the list of who watched, the way it
+  // works in Instagram. The capture asks before the taps underneath get the
+  // touch, and it only says yes to a clear drag upwards, so a short tap
+  // still moves to the next story.
+  const swipeUp = PanResponder.create({
+    onMoveShouldSetPanResponderCapture: (event, state) =>
+      !!story?.is_mine &&
+      state.dy < -25 &&
+      Math.abs(state.dy) > Math.abs(state.dx),
+
+    onPanResponderRelease: () => openActivity(),
+  });
 
   // Tap the right half for the next story, the left half to go back.
   const goNext = () => {
@@ -247,7 +283,7 @@ const StoryViewer = ({ route, navigation }: Props) => {
           </TouchableOpacity>
         </View>
       ) : (
-        <View style={styles.viewer}>
+        <View style={styles.viewer} {...swipeUp.panHandlers}>
           {/* A story can be a clip as well as a picture, and the address is
               the only way to tell them apart. */}
           {isVideo(story.image_url) ? (
@@ -310,31 +346,43 @@ const StoryViewer = ({ route, navigation }: Props) => {
             </View>
           </View>
 
-          {/* My own story gets the owner's bar along the bottom. Delete
-              lives under More, where Instagram keeps it. */}
+          {/* My own story gets the count of who watched and the owner's bar
+              under it. Both sit in the one column, so the count can never
+              land on top of the labels. Delete lives under More, where
+              Instagram keeps it. */}
           {story.is_mine && (
-            <View style={styles.ownerBar}>
-              {[
-                { key: 'Activity', label: 'Activity', icon: Users },
-                { key: 'ShareTo', label: 'Share to', icon: Send },
-                { key: 'ShareOn', label: 'Share on...', icon: Share2 },
-                { key: 'Mention', label: 'Mention', icon: AtSign },
-                { key: 'More', label: 'More', icon: Menu },
-              ].map((one) => (
-                <TouchableOpacity
-                  key={one.key}
-                  style={styles.ownerItem}
-                  onPress={() => {
-                    if (one.key === 'More') return handleDelete();
-                    if (one.key === 'Activity') return openActivity();
+            <View style={styles.ownerArea}>
+              <TouchableOpacity style={styles.viewsRow} onPress={openActivity}>
+                <Eye size={17} color="#fff" />
 
-                    Alert.alert(one.label, 'This one is not built yet.');
-                  }}
-                >
-                  <one.icon size={24} color="#fff" />
-                  <Text style={styles.ownerText}>{one.label}</Text>
-                </TouchableOpacity>
-              ))}
+                <Text style={styles.viewsText}>
+                  {views === 1 ? '1 view' : `${views} views`}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.ownerBar}>
+                {[
+                  { key: 'Activity', label: 'Activity', icon: Users },
+                  { key: 'ShareTo', label: 'Share to', icon: Send },
+                  { key: 'ShareOn', label: 'Share on...', icon: Share2 },
+                  { key: 'Mention', label: 'Mention', icon: AtSign },
+                  { key: 'More', label: 'More', icon: Menu },
+                ].map((one) => (
+                  <TouchableOpacity
+                    key={one.key}
+                    style={styles.ownerItem}
+                    onPress={() => {
+                      if (one.key === 'More') return handleDelete();
+                      if (one.key === 'Activity') return openActivity();
+
+                      Alert.alert(one.label, 'This one is not built yet.');
+                    }}
+                  >
+                    <one.icon size={24} color="#fff" />
+                    <Text style={styles.ownerText}>{one.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           )}
 
@@ -368,7 +416,7 @@ const StoryViewer = ({ route, navigation }: Props) => {
         </View>
       )}
 
-      {/* Who this story went out to */}
+      {/* Who has watched this story, newest first */}
       <Modal
         visible={showActivity}
         transparent
@@ -384,31 +432,57 @@ const StoryViewer = ({ route, navigation }: Props) => {
         <View style={styles.sheet}>
           <View style={styles.sheetHandle} />
 
-          <Text style={styles.sheetTitle}>Who can see this</Text>
-
-          <Text style={styles.sheetNote}>
-            Everyone following you. The server keeps no record of who has
-            actually opened it.
+          <Text style={styles.sheetTitle}>
+            {views === 1 ? '1 view' : `${views} views`}
           </Text>
 
-          {loadingAudience ? (
+          <Text style={styles.sheetNote}>
+            Only you can see who has watched your story.
+          </Text>
+
+          {loadingViewers ? (
             <ActivityIndicator style={styles.sheetLoader} color="#fff" />
           ) : (
             <FlatList
-              data={audience}
+              data={viewers}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <UserRow
-                  user={item}
+                <TouchableOpacity
+                  style={styles.viewerRow}
                   onPress={() => {
                     closeActivity();
                     navigation.push('UserProfile', { userId: item.id });
                   }}
-                />
+                >
+                  <Image
+                    source={
+                      item.avatar_url
+                        ? { uri: item.avatar_url }
+                        : require('../assets/images/Portelcrafterlogo.png')
+                    }
+                    style={styles.viewerAvatar}
+                  />
+
+                  <View style={styles.viewerNames}>
+                    <Text style={styles.viewerUsername} numberOfLines={1}>
+                      {item.username}
+                    </Text>
+
+                    {!!item.display_name && (
+                      <Text style={styles.viewerName} numberOfLines={1}>
+                        {item.display_name}
+                      </Text>
+                    )}
+                  </View>
+
+                  <Text style={styles.viewerTime}>
+                    {timeAgo(item.viewed_at)}
+                  </Text>
+                </TouchableOpacity>
               )}
               ListEmptyComponent={
                 <Text style={styles.sheetEmpty}>
-                  Nobody follows you yet, so only you can see this.
+                  Nobody has watched this one yet.
                 </Text>
               }
             />
@@ -579,16 +653,73 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
   },
 
-  ownerBar: {
+  // The whole bottom corner of my own story. A little dark behind it keeps
+  // the writing readable over a bright picture.
+  ownerArea: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
+    backgroundColor: '#00000055',
+    paddingTop: 4,
+  },
+
+  viewsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+
+  viewsText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  viewerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+
+  viewerAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#262626',
+  },
+
+  viewerNames: {
+    flex: 1,
+    marginLeft: 12,
+  },
+
+  viewerUsername: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  viewerName: {
+    color: '#8e8e93',
+    fontSize: 14,
+    marginTop: 2,
+  },
+
+  viewerTime: {
+    color: '#8e8e93',
+    fontSize: 13,
+    marginLeft: 10,
+  },
+
+  ownerBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 6,
+    paddingBottom: 10,
   },
 
   ownerItem: {

@@ -144,7 +144,12 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
             showAddButton={false}
             hasStory={stories.length > 0}
             // Grey once their newest story has been watched, red until then.
-            seenStory={ringFor(user.id, newestStory) === 'seen'}
+            // The stories say themselves whether I opened them, which holds
+            // for somebody I do not follow, since they miss from the tray.
+            seenStory={
+              stories.every((item) => item.viewed) ||
+              ringFor(user.id, newestStory) === 'seen'
+            }
             onPressAvatar={
               stories.length > 0
                 ? () =>

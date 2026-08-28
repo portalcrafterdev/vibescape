@@ -35,6 +35,20 @@ const ReelViewerScreen = ({ route, navigation }: Props) => {
     if (viewableItems.length > 0) setActiveId(viewableItems[0].item.id);
   }).current;
 
+  // Adding or removing a comment moves the number under that reel.
+  const countComments = (reelId: string, delta: number) => {
+    setReels((old) =>
+      old.map((item) =>
+        item.id === reelId
+          ? {
+              ...item,
+              comments_count: Math.max((item.comments_count ?? 0) + delta, 0),
+            }
+          : item,
+      ),
+    );
+  };
+
   const handleDeleted = (reelId: string) => {
     const left = reels.filter((item) => item.id !== reelId);
 
@@ -67,7 +81,9 @@ const ReelViewerScreen = ({ route, navigation }: Props) => {
             onOpenComments={() =>
               navigation.push('Comments', {
                 postId: item.id,
+                kind: 'reel',
                 mine: !!item.is_mine,
+                onChange: (delta) => countComments(item.id, delta),
               })
             }
             onBack={() => navigation.goBack()}

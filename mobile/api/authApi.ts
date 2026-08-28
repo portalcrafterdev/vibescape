@@ -353,6 +353,10 @@ export interface StoryOut {
   image_url: string;
   created_at: string;
   expires_at: string;
+  /** How many people have opened it. My own looks are not counted. */
+  views_count?: number;
+  /** True once I have opened this one. The server remembers it. */
+  viewed?: boolean;
   is_mine?: boolean;
 }
 
@@ -363,6 +367,23 @@ export interface StoryTray {
   is_mine?: boolean;
   story_count?: number;
   preview_url?: string | null;
+  /** True when I have opened every story this person has up. */
+  all_seen?: boolean;
+}
+
+/** What comes back after saying a story was opened. */
+export interface StoryViewResponse {
+  views_count: number;
+  viewed: boolean;
+}
+
+/** One person in the list of who watched a story. */
+export interface StoryViewerOut {
+  id: string;
+  username: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
+  viewed_at: string;
 }
 
 export interface CreateStoryRequest {
@@ -765,6 +786,20 @@ export const likeReel = async (reelId: string): Promise<ReelLikeResponse> =>
 export const unlikeReel = async (reelId: string): Promise<ReelLikeResponse> =>
   unwrap(await api.delete(`/reels/${reelId}/like`));
 
+/** GET /reels/{reel_id}/comments — auth required. Newest first. */
+export const listReelComments = async (
+  reelId: string,
+  params: CursorParams = {}
+): Promise<PaginatedComments> =>
+  unwrap(await api.get(`/reels/${reelId}/comments`, { params }));
+
+/** POST /reels/{reel_id}/comments -> 201 — auth required. */
+export const createReelComment = async (
+  reelId: string,
+  data: CreateCommentRequest
+): Promise<CommentOut> =>
+  unwrap(await api.post(`/reels/${reelId}/comments`, data));
+
 /** POST /reels/{reel_id}/view — auth required. Fire-and-forget view counter. */
 export const recordReelView = async (
   reelId: string
@@ -792,6 +827,21 @@ export const getUserStories = async (userId: string): Promise<StoryOut[]> =>
 export const deleteStory = async (storyId: string): Promise<void> => {
   await api.delete(`/stories/${storyId}`);
 };
+
+/** POST /stories/{story_id}/view — auth required. Says I opened this one.
+ *  Safe to send again for the same story, and my own looks are not counted. */
+export const viewStory = async (
+  storyId: string
+): Promise<StoryViewResponse> =>
+  unwrap(await api.post(`/stories/${storyId}/view`));
+
+/** GET /stories/{story_id}/viewers — auth required. Author only, anyone else
+ *  gets a 403. Newest watcher first. limit 1-100, default 50. */
+export const getStoryViewers = async (
+  storyId: string,
+  params: { limit?: number } = {}
+): Promise<StoryViewerOut[]> =>
+  unwrap(await api.get(`/stories/${storyId}/viewers`, { params }));
 
 // ============================================================
 // Highlights  —  /highlights

@@ -21,7 +21,10 @@ export type RootStackParamList = {
   // onChange lets the post keep its comment count right without reloading.
   // mine says the post belongs to me, so I can clear anyone's comment off it.
   Comments: {
+    // A post id, or a reel id when kind says so. Comments live on both, but
+    // they are asked for down different roads.
     postId: string;
+    kind?: 'post' | 'reel';
     mine?: boolean;
     onChange?: (delta: number) => void;
   };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -35,6 +35,8 @@ import StoryAvatar from '../components/StoryAvatar';
 import {
   listComments,
   createComment,
+  listReelComments,
+  createReelComment,
   deleteComment,
   listReplies,
   createReply,
@@ -60,9 +62,28 @@ const timeAgo = (date: string) => {
   return `${Math.floor(days / 7)}w`;
 };
 
+// Cuts a comment around any @name in it so those pieces can be shown in the
+// app colour. The brackets keep the names in what split hands back.
+const withMentions = (body: string) =>
+  body
+    .split(/(@[A-Za-z0-9._]+)/g)
+    .map((piece, i) =>
+      piece.startsWith('@') ? (
+        <Text key={i} style={styles.mention}>
+          {piece}
+        </Text>
+      ) : (
+        piece
+      ),
+    );
+
 const CommentsScreen = ({ route, navigation }: Props) => {
-  const { postId, mine, onChange } = route.params;
+  const { postId, kind, mine, onChange } = route.params;
   const { user } = useProfile();
+
+  // The same sheet serves posts and reels. Only the two calls that carry the
+  // id differ, since replies hang off a comment either way.
+  const isReel = kind === 'reel';
 
   const [comments, setComments] = useState<CommentOut[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -73,7 +94,8 @@ const CommentsScreen = ({ route, navigation }: Props) => {
   const [sending, setSending] = useState(false);
   const [text, setText] = useState('');
 
-  // The API only has comments for posts, so a reel id comes back 404.
+  // Set when the post or reel itself is gone, so the sheet says so instead
+  // of sitting there empty.
   const [missing, setMissing] = useState(false);
 
   // How much of the screen the keyboard is covering. The sheet sits in its
@@ -121,6 +143,25 @@ const CommentsScreen = ({ route, navigation }: Props) => {
   // Set while answering someone, which sends a reply instead of a comment.
   const [replyTo, setReplyTo] = useState<CommentOut | null>(null);
 
+  // Held so tapping Reply can open the keyboard on the box.
+  const inputRef = useRef<TextInput>(null);
+
+  // Tapping Reply drops the name into the box with an @ in front, the way
+  // Instagram does, so it can be edited or taken out before sending.
+  const startReply = (comment: CommentOut) => {
+    setReplyTo(comment);
+    setText(`@${comment.author.username} `);
+    inputRef.current?.focus();
+  };
+
+  // Backing out takes the name away again, unless something was typed after
+  // it, which is worth keeping.
+  const cancelReply = () => {
+    if (replyTo && text.trim() === `@${replyTo.author.username}`) setText('');
+
+    setReplyTo(null);
+  };
+
   // Only one comment shows its replies at a time, so one list is enough.
   const [openId, setOpenId] = useState<string | null>(null);
   const [replies, setReplies] = useState<CommentOut[]>([]);
@@ -148,10 +189,9 @@ const CommentsScreen = ({ route, navigation }: Props) => {
 
   const loadComments = async (nextCursor: string | null) => {
     try {
-      const response = await listComments(postId, {
-        cursor: nextCursor,
-        limit: 20,
-      });
+      const response = isReel
+        ? await listReelComments(postId, { cursor: nextCursor, limit: 20 })
+        : await listComments(postId, { cursor: nextCursor, limit: 20 });
 
       // First page replaces the list, later pages add to it.
       setComments(
@@ -211,7 +251,9 @@ const CommentsScreen = ({ route, navigation }: Props) => {
         return;
       }
 
-      const comment = await createComment(postId, { body: body.trim() });
+      const comment = isReel
+        ? await createReelComment(postId, { body: body.trim() })
+        : await createComment(postId, { body: body.trim() });
 
       // Newest first, matching the order the API returns.
       setComments([comment, ...comments]);
@@ -224,10 +266,7 @@ const CommentsScreen = ({ route, navigation }: Props) => {
 
       if (error?.response?.status === 404) {
         setMissing(true);
-        Alert.alert(
-          'Not available',
-          'The server has no comments for reels yet.',
-        );
+        Alert.alert('Not available', 'This one is no longer there.');
       } else {
         Alert.alert('Could not post', 'Please try again.');
       }
@@ -236,8 +275,26 @@ const CommentsScreen = ({ route, navigation }: Props) => {
     }
   };
 
+  // The server lets two people clear a comment: whoever wrote it, and whoever
+  // owns the post or reel it sits on. It sends can_delete saying the same
+  // thing, but that field is left out of some answers and reads as false when
+  // it is, so the two rules behind it are checked as well.
+  const canDelete = (comment: CommentOut) =>
+    !!comment.can_delete || !!mine || comment.author.id === user?.id;
+
   const handleDelete = (comment: CommentOut) => {
-    Alert.alert('Delete comment', 'This cannot be undone.', [
+    // The server clears the answers to a comment along with it, so the
+    // warning says how many are going.
+    const answers = comment.replies_count ?? 0;
+
+    const warning =
+      answers === 0
+        ? 'This cannot be undone.'
+        : answers === 1
+        ? 'Its reply goes with it. This cannot be undone.'
+        : `Its ${answers} replies go with it. This cannot be undone.`;
+
+    Alert.alert('Delete comment', warning, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -246,6 +303,12 @@ const CommentsScreen = ({ route, navigation }: Props) => {
           try {
             await deleteComment(comment.id);
             setComments(comments.filter((item) => item.id !== comment.id));
+
+            // Its answers went too, so the open list under it is closed.
+            if (openId === comment.id) {
+              setOpenId(null);
+              setReplies([]);
+            }
 
             if (onChange) onChange(-1);
           } catch (error: any) {
@@ -296,11 +359,11 @@ const CommentsScreen = ({ route, navigation }: Props) => {
         ) : comments.length === 0 ? (
           <View style={styles.emptyBox}>
             <Text style={styles.emptyTitle}>
-              {missing ? 'Comments are off' : 'No comments yet'}
+              {missing ? 'Not available' : 'No comments yet'}
             </Text>
             <Text style={styles.emptyText}>
               {missing
-                ? 'This one does not take comments yet.'
+                ? 'This one is no longer there.'
                 : 'Start the conversation.'}
             </Text>
           </View>
@@ -347,13 +410,15 @@ const CommentsScreen = ({ route, navigation }: Props) => {
                     <Text style={styles.age}>{timeAgo(item.created_at)}</Text>
                   </View>
 
-                  <Text style={styles.comment}>{item.body}</Text>
+                  <Text style={styles.comment}>
+                    {withMentions(item.body)}
+                  </Text>
 
                   <View style={styles.actions}>
                     {/* There is no point answering yourself, so Reply only
                         shows on someone else's comment. */}
                     {item.author.id !== user?.id && (
-                      <TouchableOpacity onPress={() => setReplyTo(item)}>
+                      <TouchableOpacity onPress={() => startReply(item)}>
                         <Text style={styles.action}>Reply</Text>
                       </TouchableOpacity>
                     )}
@@ -398,7 +463,9 @@ const CommentsScreen = ({ route, navigation }: Props) => {
                             <Text style={styles.username}>
                               {reply.author.username}
                             </Text>
-                            <Text style={styles.comment}>{reply.body}</Text>
+                            <Text style={styles.comment}>
+                              {withMentions(reply.body)}
+                            </Text>
                           </View>
                         </View>
                       ))
@@ -436,10 +503,11 @@ const CommentsScreen = ({ route, navigation }: Props) => {
         {!!replyTo && (
           <View style={styles.replyingRow}>
             <Text style={styles.replyingText}>
-              Replying to {replyTo.author.username}
+              Replying to{' '}
+              <Text style={styles.mention}>@{replyTo.author.username}</Text>
             </Text>
 
-            <TouchableOpacity onPress={() => setReplyTo(null)}>
+            <TouchableOpacity onPress={cancelReply}>
               <Text style={styles.action}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -455,6 +523,7 @@ const CommentsScreen = ({ route, navigation }: Props) => {
 
           <View style={styles.pill}>
             <TextInput
+              ref={inputRef}
               value={text}
               onChangeText={setText}
               placeholder="What do you think of this?"
@@ -528,21 +597,23 @@ const CommentsScreen = ({ route, navigation }: Props) => {
               </TouchableOpacity>
             ))}
 
-            {/* Always here. The server turns down a comment that is not
-                mine to remove, and says so. */}
-            <TouchableOpacity
-              style={styles.menuRow}
-              onPress={() => {
-                const target = menuFor;
-                setMenuFor(null);
+            {/* Only on a comment I am allowed to clear, so nobody finds out
+                by tapping. The server still has the final say. */}
+            {!!menuFor && canDelete(menuFor) && (
+              <TouchableOpacity
+                style={styles.menuRow}
+                onPress={() => {
+                  const target = menuFor;
+                  setMenuFor(null);
 
-                if (target) handleDelete(target);
-              }}
-            >
-              <Trash2 size={20} color="#ed4956" />
+                  if (target) handleDelete(target);
+                }}
+              >
+                <Trash2 size={20} color="#ed4956" />
 
-              <Text style={[styles.menuText, styles.menuRed]}>Delete</Text>
-            </TouchableOpacity>
+                <Text style={[styles.menuText, styles.menuRed]}>Delete</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -768,6 +839,12 @@ const styles = StyleSheet.create({
   replyingText: {
     color: '#8e8e93',
     fontSize: 12,
+  },
+
+  // The @name inside a comment, picked out in the app colour.
+  mention: {
+    color: '#6C63FF',
+    fontWeight: '600',
   },
 
   emojiRow: {

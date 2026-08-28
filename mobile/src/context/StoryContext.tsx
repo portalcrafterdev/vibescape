@@ -83,12 +83,19 @@ export const StoryProvider = ({ children }: { children: React.ReactNode }) => {
   const ringFor = (userId?: string, latestAt?: string | null) => {
     if (!userId) return '';
 
+    const entry = tray.find((item) => item.author.id === userId);
+
     // A time can be handed in by a screen that asked the API itself. Anyone
     // else is looked up in the tray.
-    const latest =
-      latestAt ?? tray.find((item) => item.author.id === userId)?.latest_at;
+    const latest = latestAt ?? entry?.latest_at;
 
     if (!latest) return '';
+
+    // The server remembers what has been opened now, so it has the last word
+    // and the ring stays grey after a restart or on another phone. The list
+    // kept on this phone still answers for anyone the tray does not carry,
+    // and it turns the ring grey straight away without waiting for the tray.
+    if (entry?.all_seen) return 'seen';
 
     const watched = seen[userId];
 
