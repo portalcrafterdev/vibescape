@@ -166,6 +166,14 @@ const ChatScreen = ({ route, navigation }: Props) => {
 
       {loading ? (
         <ActivityIndicator style={styles.loader} color="#fff" />
+      ) : messages.length === 0 ? (
+        // Kept outside the list on purpose. The list is turned over to put
+        // the newest message at the bottom, and anything inside it comes out
+        // turned over as well. The box holds it down near the writing row,
+        // where the turned over list used to leave it.
+        <View style={styles.emptyBox}>
+          <Text style={styles.empty}>Say hello.</Text>
+        </View>
       ) : (
         <FlatList
           data={messages}
@@ -218,7 +226,6 @@ const ChatScreen = ({ route, navigation }: Props) => {
               </View>
             );
           }}
-          ListEmptyComponent={<Text style={styles.empty}>Say hello.</Text>}
         />
       )}
 
@@ -427,15 +434,22 @@ const styles = StyleSheet.create({
   },
 
   loader: {
+    // Same reason as the empty line below.
+    flex: 1,
     marginTop: 40,
+  },
+
+  // Fills the room the list would have taken, so the writing box stays at
+  // the bottom of the screen.
+  emptyBox: {
+    flex: 1,
+    justifyContent: 'flex-end',
   },
 
   empty: {
     color: '#8e8e93',
     fontSize: 15,
     textAlign: 'center',
-    marginTop: 60,
-    // The list is upside down, so this text has to be flipped back.
-    transform: [{ scaleY: -1 }],
+    marginBottom: 60,
   },
 });
