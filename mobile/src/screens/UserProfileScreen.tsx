@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,6 +27,7 @@ import {
   getUserByUsername,
   getUserStories,
   unfollowUser,
+  startConversation,
   UserProfile,
   StoryOut,
 } from '../../api/authApi';
@@ -40,6 +42,9 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+
+  // Set while the chat is being opened, so two taps cannot start two.
+  const [messaging, setMessaging] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
 
   // Their stories, so the picture gets a ring that opens them.
@@ -92,6 +97,29 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
       console.log('Follow failed', error);
     } finally {
       setBusy(false);
+    }
+  };
+
+  // Messaging somebody opens the thread with them. The API hands back the
+  // one that already exists, so this does not make a second.
+  const openChat = async () => {
+    if (!user || messaging) return;
+
+    setMessaging(true);
+
+    try {
+      const conversation = await startConversation({ user_id: user.id });
+
+      navigation.push('Chat', {
+        conversationId: conversation.id,
+        username: user.username,
+        avatarUrl: user.avatar_url,
+      });
+    } catch (error) {
+      console.log('Start conversation failed', error);
+      Alert.alert('Could not open', 'Please try again.');
+    } finally {
+      setMessaging(false);
     }
   };
 
@@ -190,8 +218,16 @@ const UserProfileScreen = ({ route, navigation }: Props) => {
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.button, styles.greyButton]}>
-                <Text style={styles.buttonText}>Message</Text>
+              <TouchableOpacity
+                style={[styles.button, styles.greyButton]}
+                onPress={openChat}
+                disabled={messaging}
+              >
+                {messaging ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Message</Text>
+                )}
               </TouchableOpacity>
             </View>
           )}
